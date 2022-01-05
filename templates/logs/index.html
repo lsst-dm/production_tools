@@ -1,5 +1,11 @@
 {% extends 'base.html' %}
 
+{% block additional_refs %}
+<script src="{{ url_for('static', filename='jquery-3.6.0.min.js') }}"></script>
+<script src="{{ url_for('static', filename='jquery-ui.min.js') }}"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='jquery-ui.min.css') }}"></script>
+{% endblock %}
+
 {% block title %}Logs{% endblock %}
 
 {% block header %}
@@ -7,10 +13,20 @@
 {% endblock %}
 
 {% block content %}
+<script>
+$( function() {
+    $( "#collection" ).autocomplete({
+      source: "collections",
+      minLength: 3,
+    });
+} );
+</script>
   <form method="post">
     <label for="collection">Collection: </label>
     <input name="collection" id="collection" required>
   </form>
+
+
 {% endblock %}
 
 
