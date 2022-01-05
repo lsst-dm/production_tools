@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}Logs{% endblock %}
+
+{% block header %}
+  <h1>Pipeline Log Viewer</h1>
+{% endblock %}
+
+{% block content %}
+  <form method="post">
+    <label for="collection">Collection: </label>
+    <input name="collection" id="collection" required>
+  </form>
+{% endblock %}
+
+

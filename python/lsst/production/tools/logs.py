@@ -1,12 +1,12 @@
 
-from flask import Flask, Blueprint
+from flask import Flask, Blueprint, render_template
 import lsst.daf.butler as dafButler
 
 bp = Blueprint('logs', __name__, url_prefix='/logs')
 
 @bp.route("/")
 def index():
-    return "<p>Log Viewer Index</p>"
+    return render_template("logs/index.html")
 
 @bp.route("/collections")
 def collections():

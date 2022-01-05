@@ -1,0 +1,25 @@
+<!doctype html>
+<title>Rubin Production Tools</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='custom.css') }}">
+<link rel="icon" href="{{ url_for('static', filename='rubin-favicon-transparent-32px.png') }}">
+<nav id="header" class="navbar navbar-expand-md navbar-dark bg-dark sticky-top shadow">
+    <a class="navbar-brand" href="">Rubin Production Tools</a>
+    <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-2">
+        <li class="nav-item">
+          <a class="nav-link" aria-current="page" href="/">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" href="/logs">Logs</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/errors">Errors</a>
+        </li>
+    </ul>
+</nav>
+<section class="content">
+  <header>
+    {% block header %}{% endblock %}
+  </header>
+  {% block content %}{% endblock %}
+</section>

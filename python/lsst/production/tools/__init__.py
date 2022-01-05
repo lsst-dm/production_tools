@@ -5,7 +5,8 @@ from . import logs
 
 
 def create_app():
-    app = Flask(__name__, instance_relative_config=True)
+    app = Flask(__name__, instance_relative_config=True,
+                root_path="/Users/ctslater/production-tools/")
 
     app.register_blueprint(logs.bp)
 
