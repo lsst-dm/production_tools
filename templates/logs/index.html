@@ -21,9 +21,59 @@ $( function() {
     });
 } );
 </script>
-  <form method="post">
-    <label for="collection">Collection: </label>
-    <input name="collection" id="collection" required>
+<form method="get" action="{{ url_for(dataId) }}">
+    <div class="row row-cols-lg-auto g-3 mt-2 align-items-center">
+        <div class="col">
+            <label for="collection">Collection: </label>
+        </div>
+        <div class="col">
+            <input name="collection" id="collection" class="form-control" size=40>
+        </div>
+    </div>
+
+    <div class="row row-cols-lg-auto g-3 mt-2 align-items-center">
+        <div class="col">
+            <label for="visit">Visit: </label>
+        </div>
+        <div class="col">
+            <input name="visit" class="form-control">
+        </div>
+
+        <div class="col">
+            <label for="detector">Detector: </label>
+        </div>
+        <div class="col">
+            <input name="detector" class="form-control">
+        </div>
+
+        <div class="col">
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+    </div>
+
+    <div class="mt-2">
+        <p>Or</p>
+    </div>
+
+    <div class="row row-cols-lg-auto g-3 mt-2 align-items-center">
+        <div class="col">
+            <label for="tract">Tract: </label>
+        </div>
+        <div class="col">
+            <input name="tract" class="form-control">
+        </div>
+
+        <div class="col">
+            <label for="patch">Patch: </label>
+        </div>
+        <div class="col">
+            <input name="patch" class="form-control">
+        </div>
+
+        <div class="col">
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+    </div>
   </form>
 
 

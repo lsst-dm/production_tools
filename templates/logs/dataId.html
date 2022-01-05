@@ -1,0 +1,36 @@
+
+{% extends 'base.html' %}
+
+{% block additional_refs %}
+<script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
+<script src="{{ url_for('static', filename='jquery-3.6.0.min.js') }}"></script>
+<script src="{{ url_for('static', filename='jquery-ui.min.js') }}"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='jquery-ui.min.css') }}"></script>
+{% endblock %}
+
+{% block title %}Logs{% endblock %}
+
+{% block content %}
+<H1>{{ dataId }}</h1>
+<h3>Collection {{ collection }}</h3>
+
+<div class="accordion">
+{% for log_type in log_types %}
+    <div class="accordion-item">
+       <h3 id="log_heading_{{ loop.index }}" class="accordion-header">
+           <button class="accordion-button collapsed" data-bs-toggle="collapse"
+                                                      data-bs-target="#log_body_{{ loop.index }}"
+                                                      aria-expanded="false"
+                                                      aria-controls="log_body_{{loop.index}}">{{ log_type }}</button>
+       </h3>
+      <div class="accordion-collapse collapse" id="log_body_{{ loop.index }}"
+           aria-labelled-by="log_heading_{{ loop.index }}">
+          <div class="accordion-body">
+              Log messages
+          </div>
+      </div>
+    </div>
+{% endfor %}
+</div>
+
+{% endblock %}
