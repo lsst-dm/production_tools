@@ -15,22 +15,37 @@
 <h3>Collection {{ collection }}</h3>
 
 <div class="accordion">
-{% for log_type in log_types %}
+{% for log in logs %}
     <div class="accordion-item">
        <h3 id="log_heading_{{ loop.index }}" class="accordion-header">
-           <button class="accordion-button collapsed" data-bs-toggle="collapse"
+           <button id="button_{{loop.index}}" class="log-buttons accordion-button collapsed" data-bs-toggle="collapse"
                                                       data-bs-target="#log_body_{{ loop.index }}"
                                                       aria-expanded="false"
-                                                      aria-controls="log_body_{{loop.index}}">{{ log_type }}</button>
+                                                      aria-controls="log_body_{{loop.index}}"
+                                                      data-uuid="{{ log['uuid'] }}">
+               {{ log['datasetName'] }}
+           </button>
        </h3>
       <div class="accordion-collapse collapse" id="log_body_{{ loop.index }}"
            aria-labelled-by="log_heading_{{ loop.index }}">
-          <div class="accordion-body">
-              Log messages
+          <div class="accordion-body" id="log_messages_{{ log['uuid'] }}">
           </div>
       </div>
     </div>
 {% endfor %}
 </div>
+<script>
 
+function fetchLogs(event) {
+    fetch('/logs/logfile?uuid=' + event.data.uuid)
+            .then(response => response.text())
+            .then(text => {
+                    $("#log_messages_" + event.data.uuid).html(text);
+                });
+}
+$(".log-buttons").each(function() {
+    $(this).on('click', {"uuid": $(this).data("uuid")}, fetchLogs);
+});
+
+</script>
 {% endblock %}

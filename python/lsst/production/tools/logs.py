@@ -40,9 +40,22 @@ def dataId():
     dataRefs = butler.registry.queryDatasets("*_log", dataId=dataId,
                                              collections=collection)
 
-    log_types = [x.datasetType.name for x in dataRefs]
+    logs = [{"datasetName": x.datasetType.name,
+             "uuid": x.id }
+            for x in dataRefs]
 
     return render_template("logs/dataId.html", dataId=dataId_string,
-                          collection=collection, log_types=log_types)
+                          collection=collection, logs=logs)
 
+@bp.route("/logfile")
+def logfile():
+    butler = dafButler.Butler("/Users/ctslater/ci_imsim/DATA/butler.yaml")
+    message_template = """
+    <p>{{severity}} - {{message}}</p>
+    """
+
+    uuid = request.args.get("uuid")
+    datasetRef = butler.registry.getDataset(uuid)
+    logs = butler.getDirect(datasetRef)
+    return render_template("logs/messages.html", logs=logs)
 
