@@ -1,23 +1,43 @@
+# This file is part of production-tools.
+#
+# Developed for the LSST Data Management System.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from flask import Flask, Blueprint, render_template
-
-from collections import defaultdict
 import datetime
 import json
 import os
+from collections import defaultdict
 
 import google.api_core.exceptions
+from flask import Blueprint, Flask, render_template
 from google.cloud import storage
 from textdistance import levenshtein
 
-bp = Blueprint('errors', __name__, url_prefix='/errors')
+bp = Blueprint("errors", __name__, url_prefix="/errors")
 
 
 # LOG_BUCKET="drp-us-central1-logging"
 # LOG_PREFIX="panda-rubinlog"
 
-LOG_BUCKET=os.getenv("LOG_BUCKET")
-LOG_PREFIX=os.getenv("LOG_PREFIX")
+LOG_BUCKET = os.getenv("LOG_BUCKET")
+LOG_PREFIX = os.getenv("LOG_PREFIX")
+
 
 def find_matching_messages(new_message, message_list):
 
@@ -97,14 +117,14 @@ def download_logs(bucket, prefix, year, month, day):
 def index():
     return render_template("errors/index.html")
 
+
 @bp.route("/day/<int:year>/<int:month>/<int:day>")
 def day(year=0, month=0, day=0):
 
-    if(year == 0):
+    if year == 0:
         return "Invalid parameters"
 
-
-    date_string="{:4d}-{:02d}-{:02d}".format(year, month, day)
+    date_string = "{:4d}-{:02d}-{:02d}".format(year, month, day)
 
     logs = download_logs(
         bucket,
@@ -116,6 +136,4 @@ def day(year=0, month=0, day=0):
 
     summary = parse_logs_into_summary(logs)
 
-    return render_template("errors/day.html", summary=summary,
-                           date_string=date_string)
-
+    return render_template("errors/day.html", summary=summary, date_string=date_string)
