@@ -19,11 +19,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import os
+import sys
 import lsst.daf.butler as dafButler
 from flask import Blueprint, Flask, jsonify, render_template, request
 
 bp = Blueprint("logs", __name__, url_prefix="/logs")
 
+try:
+    BUTLER_URI = os.environ['BUTLER_URI']
+except KeyError:
+    print("Must set environment variable BUTLER_URI")
+    sys.exit(1)
 
 @bp.route("/")
 def index():
@@ -34,7 +41,7 @@ def index():
 def collections():
     search_term = request.args.get("term")
 
-    butler = dafButler.Butler("/Users/ctslater/ci_imsim/DATA/butler.yaml")
+    butler = dafButler.Butler(BUTLER_URI)
     output = []
     for collection in butler.registry.queryCollections(search_term + "*"):
         output.append({"id": collection, "label": collection, "value": collection})
@@ -44,7 +51,7 @@ def collections():
 
 @bp.route("/dataId")
 def dataId():
-    butler = dafButler.Butler("/Users/ctslater/ci_imsim/DATA/butler.yaml")
+    butler = dafButler.Butler(BUTLER_URI)
 
     collection = request.args.get("collection")
 
@@ -75,7 +82,7 @@ def dataId():
 
 @bp.route("/logfile")
 def logfile():
-    butler = dafButler.Butler("/Users/ctslater/ci_imsim/DATA/butler.yaml")
+    butler = dafButler.Butler(BUTLER_URI)
     message_template = """
     <p>{{severity}} - {{message}}</p>
     """

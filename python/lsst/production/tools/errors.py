@@ -35,8 +35,14 @@ bp = Blueprint("errors", __name__, url_prefix="/errors")
 # LOG_BUCKET="drp-us-central1-logging"
 # LOG_PREFIX="panda-rubinlog"
 
-LOG_BUCKET = os.getenv("LOG_BUCKET")
-LOG_PREFIX = os.getenv("LOG_PREFIX")
+try:
+    LOG_BUCKET = os.environ["LOG_BUCKET"]
+    LOG_PREFIX = os.environ["LOG_PREFIX"]
+except KeyError:
+    print("Must set LOG_BUCKET and LOG_PREFIX environment variables")
+    sys.exit(1)
+
+CACHE_DIR = os.getenv("LOG_CACHE_DIR")
 
 
 def find_matching_messages(new_message, message_list):
@@ -85,7 +91,7 @@ def parse_logs_into_summary(logs):
     return output_by_run
 
 
-def download_logs(bucket, prefix, year, month, day):
+def download_logs(bucket_name, prefix, year, month, day):
 
     search_fmt_string = "{base:s}/{year:d}/{month:02d}/{day:02d}/"
 
@@ -95,20 +101,46 @@ def download_logs(bucket, prefix, year, month, day):
 
     storage_client = storage.Client.create_anonymous_client()
 
-    bucket = storage_client.bucket(bucket)
+    bucket = storage_client.bucket(bucket_name)
 
     files_to_download = bucket.list_blobs(prefix=search_prefix)
 
     logs = []
 
-    for bucket_file in files_to_download:
-        json_string = bucket_file.download_as_string()
+    try:
+        with open(
+            os.path.join(CACHE_DIR, f"etags_{year:d}{month:02d}{day:02d}.json"), "r"
+        ) as f:
+            old_etags = json.load(f)
+    except FileNotFoundError:
+        old_etags = {}
+    new_etags = {}
 
-        for line in json_string.decode().split("\n"):
+    for bucket_file in files_to_download:
+        if CACHE_DIR is None:
+            json_string = bucket_file.download_as_string().decode()
+        else:
+            cache_filename = os.path.join(CACHE_DIR, bucket_file.name)
+            etag = bucket_file.name
+            new_etags[bucket_file.name] = etag
+
+            if old_etags.get(bucket_file.name, "") != etag:
+                os.makedirs(os.path.dirname(cache_filename), exist_ok=True)
+                bucket_file.download_to_filename(cache_filename, if_etag_not_match=etag)
+
+            with open(cache_filename, "r") as f:
+                json_string = f.read()
+
+        for line in json_string.split("\n"):
             if len(line) == 0:
                 continue
             json_value = json.loads(line)
             logs.append(json_value)
+
+    with open(
+        os.path.join(CACHE_DIR, f"etags_{year:d}{month:02d}{day:02d}.json"), "w"
+    ) as f:
+        json.dump(new_etags, f)
 
     return logs
 
@@ -127,8 +159,8 @@ def day(year=0, month=0, day=0):
     date_string = "{:4d}-{:02d}-{:02d}".format(year, month, day)
 
     logs = download_logs(
-        bucket,
-        prefix,
+        LOG_BUCKET,
+        LOG_PREFIX,
         year,
         month,
         day,
