@@ -1,5 +1,10 @@
 <div>
+    <table class="table-borderless">
     {% for log in logs %}
-    <div>{{log.levelname }} - {{log.name}} {{log.message}}</div>
+    <tr>
+        <td class="align-top">{{log.levelname }}</td>
+        <td>{{log.name}}: {{log.message}}</td>
+    </tr>
     {% endfor %}
+    </table>
 </div>

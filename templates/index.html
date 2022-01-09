@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}Production Tools{% endblock %}
+
+{% block header %}
+  <h1>Production Tools</h1>
+{% endblock %}
+
+{% block content %}
+
+<p>Available tools</p>
+<ul>
+    {% for link in tools %}
+    <li><a href="">{{ link }}</a>
+    {% endfor %}
+</ul>
+
+{% endblock %}
+

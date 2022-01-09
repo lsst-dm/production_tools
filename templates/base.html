@@ -8,21 +8,23 @@
     <a class="navbar-brand" href="">Rubin Production Tools</a>
     <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-2">
         <li class="nav-item">
-          <a class="nav-link" aria-current="page" href="/">Home</a>
+            <a class="nav-link {{ "active" if active_page=="errors" }}" href="{{ url_for('errors.index') }}">Errors</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link active" href="/logs">Logs</a>
+            <a class="nav-link {{ "active" if active_page=="logs" }}" href="{{ url_for('logs.index') }}">Logs</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="/errors">Errors</a>
+            <a class="nav-link" href="/plot-navigator">Plots</a>
         </li>
     </ul>
 </nav>
 <section class="content">
-  <header>
-    {% block header %}{% endblock %}
-  </header>
   <div class="container-lg">
-    {% block content %}{% endblock %}
+      <header>
+        {% block header %}{% endblock %}
+      </header>
+      <div>
+        {% block content %}{% endblock %}
+      </div>
   </div>
 </section>

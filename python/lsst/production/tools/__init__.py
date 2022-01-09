@@ -1,7 +1,7 @@
 
-from flask import Flask
+from flask import Flask, render_template
 
-from . import logs
+from . import logs, errors
 
 
 def create_app():
@@ -9,8 +9,14 @@ def create_app():
                 root_path="/Users/ctslater/production-tools/")
 
     app.register_blueprint(logs.bp)
+    app.register_blueprint(errors.bp)
+
+
+    @app.route("/")
+    def index():
+        return render_template("index.html", tools=["logs", "errors"])
 
     return app
 
-__all__  = [logs, create_app]
+__all__  = [logs, errors, create_app]
 

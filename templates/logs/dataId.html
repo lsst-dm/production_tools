@@ -1,5 +1,6 @@
 
 {% extends 'base.html' %}
+{% set active_page="logs" %}
 
 {% block additional_refs %}
 <script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
@@ -37,11 +38,13 @@
 <script>
 
 function fetchLogs(event) {
-    fetch('/logs/logfile?uuid=' + event.data.uuid)
-            .then(response => response.text())
-            .then(text => {
-                    $("#log_messages_" + event.data.uuid).html(text);
-                });
+    if($.trim($("#log_messages_" + event.data.uuid).html()) == "") {
+        fetch('/logs/logfile?uuid=' + event.data.uuid)
+                .then(response => response.text())
+                .then(text => {
+                        $("#log_messages_" + event.data.uuid).html(text);
+                    });
+    }
 }
 $(".log-buttons").each(function() {
     $(this).on('click', {"uuid": $(this).data("uuid")}, fetchLogs);

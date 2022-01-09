@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% set active_page="errors" %}
+
+{% block title %}Daily Error Summary{% endblock %}
+
+{% block content %}
+<div class="container">
+    {% for run in summary %}
+    <h2>Run {{ run["run_name"] }} </h2>
+
+        {% for message_key, message_labels in run["messages"].items() %}
+        <p>{{ message_key }}</p>
+        <p>
+        <ul>
+            {% for label in message_labels %}
+                {% if loop.index <= 10 %}
+                    <li class="">{{ label }}
+                {% elif loop.index == 11 %}
+                    <li>And {{ message_labels|count - 10 }} more dataIds</a>
+                {% endif %}
+            {% endfor %}
+        </ul>
+        </p>
+        {% endfor %}
+    {% endfor %}
+</div>
+
+{% endblock %}
