@@ -2,10 +2,19 @@
 {% extends 'base.html' %}
 {% set active_page="errors" %}
 
-{% block title %}Daily Error Summary{% endblock %}
+{% block title %}Daily Error Summaries{% endblock %}
+
+
+{% block header %}Daily Error Summaries{% endblock %}
 
 {% block content %}
 
-<p>Index not implemented yet</p>
+<ul>
+    {% for (year, month, day) in dates %}
+    <li><a href="{{ url_for('errors.day', year=year, month=month, day=day) }}">
+            {{year}}-{{month}}-{{day}}
+        </a>
+    {% endfor %}
+</ul>
 
 {% endblock %}

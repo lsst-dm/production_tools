@@ -22,6 +22,7 @@
 import datetime
 import json
 import os
+import re
 from collections import defaultdict
 
 import google.api_core.exceptions
@@ -147,7 +148,17 @@ def download_logs(bucket_name, prefix, year, month, day):
 
 @bp.route("/")
 def index():
-    return render_template("errors/index.html")
+    storage_client = storage.Client.create_anonymous_client()
+
+    bucket = storage_client.bucket(LOG_BUCKET)
+
+    bucket_contents = bucket.list_blobs(prefix=LOG_PREFIX)
+
+    filename_matches = list(re.match(LOG_PREFIX + "/(\d+)/(\d+)/(\d+)", blob.name)
+                            for blob in bucket_contents)
+    dates = list(set(match.groups() for match in filename_matches if match is not None))
+    dates.sort(reverse=True)
+    return render_template("errors/index.html", dates=dates)
 
 
 @bp.route("/day/<int:year>/<int:month>/<int:day>")
