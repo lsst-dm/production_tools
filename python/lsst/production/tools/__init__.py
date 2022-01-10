@@ -26,9 +26,7 @@ from . import errors, logs
 
 def create_app():
     app = Flask(
-        __name__,
-        instance_relative_config=True,
-        root_path="/Users/ctslater/production-tools/",
+        "production-tools",
     )
 
     app.register_blueprint(logs.bp)
