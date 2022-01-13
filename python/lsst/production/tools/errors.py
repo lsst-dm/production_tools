@@ -154,8 +154,10 @@ def index():
 
     bucket_contents = bucket.list_blobs(prefix=LOG_PREFIX)
 
-    filename_matches = list(re.match(LOG_PREFIX + "/(\d+)/(\d+)/(\d+)", blob.name)
-                            for blob in bucket_contents)
+    filename_matches = list(
+        re.match(LOG_PREFIX + "/(\d+)/(\d+)/(\d+)", blob.name)
+        for blob in bucket_contents
+    )
     dates = list(set(match.groups() for match in filename_matches if match is not None))
     dates.sort(reverse=True)
     return render_template("errors/index.html", dates=dates)

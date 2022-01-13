@@ -15,13 +15,79 @@
 
 {% block content %}
 <script>
+
+function updateSkymapInstrument(event, ui) {
+    fetch('/logs/instruments')
+        .then(response => response.json())
+        .then(instruments => {
+                selectedIndex = $("select#instrument")[0].options.selectedIndex;
+                $("select#instrument option").remove();
+                for(n=0; n < instruments.length; n++) {
+                    $("select#instrument")[0].options.add(new Option(instruments[n]));
+                    }
+                if(selectedIndex > 0) {
+                    $("select#instrument")[0].options.selectedIndex = selectedIndex;
+                }
+            });
+
+    fetch('/logs/skymaps')
+        .then(response => response.json())
+        .then(skymaps => {
+                selectedIndex = $("select#skymap")[0].options.selectedIndex;
+                $("select#skymap option").remove();
+                for(n=0; n < skymaps.length; n++) {
+                    $("select#skymap")[0].options.add(new Option(skymaps[n]));
+                    }
+                if(selectedIndex > 0) {
+                    $("select#skymap")[0].options.selectedIndex = selectedIndex;
+                }
+            });
+
+}
+
+function saveForm(event) {
+    if(typeof Storage !== 'undefined') {
+        skymap_json_val = JSON.stringify(Array.from($("select#skymap")[0].options, (x) => x.text));
+        localStorage.skymap_options = skymap_json_val;
+        localStorage.skymap_value = $("select#skymap")[0].options.selectedIndex;
+
+        instrument_json_val = JSON.stringify(Array.from($("select#instrument")[0].options, (x) => x.text));
+        localStorage.instrument_options = instrument_json_val;
+        localStorage.instrument_value = $("select#instrument")[0].options.selectedIndex;
+    }
+}
+
+function loadForm(event) {
+    if(typeof Storage !== 'undefined') {
+        skymap_options = JSON.parse(localStorage.skymap_options)
+        for(n=0; n < skymap_options.length; n++) {
+            $("select#skymap")[0].options.add(new Option(skymap_options[n]));
+        }
+        $("select#skymap")[0].options.selectedIndex = localStorage.skymap_value;
+
+        instrument_options = JSON.parse(localStorage.instrument_options)
+        for(n=0; n < instrument_options.length; n++) {
+            $("select#instrument")[0].options.add(new Option(instrument_options[n]));
+        }
+        $("select#instrument")[0].options.selectedIndex = localStorage.instrument_value;
+    }
+}
+
 $( function() {
     $( "#collection" ).autocomplete({
       source: "collections",
       minLength: 3,
     });
+
+    $("#collection").on("autocompletechange", updateSkymapInstrument);
+    $("#collection").on("autocompleteselect", updateSkymapInstrument);
+
+    loadForm();
 } );
+$(window).on('beforeunload', saveForm);
+
 </script>
+
 <form method="get" action="{{ url_for("logs.dataId") }}">
     <div class="row row-cols-lg-auto g-3 mt-2 align-items-center">
         <div class="col">
@@ -29,6 +95,26 @@ $( function() {
         </div>
         <div class="col">
             <input name="collection" id="collection" class="form-control" size=40>
+        </div>
+    </div>
+
+    <div class="row row-cols-lg-auto g-3 mt-2 align-items-center">
+        <div class="col">
+            <label for="instrument">Instrument: </label>
+        </div>
+        <div class="col">
+            <select name="instrument" id="instrument" class="form-control">
+            </select>
+        </div>
+    </div>
+
+    <div class="row row-cols-lg-auto g-3 mt-2 align-items-center">
+        <div class="col">
+            <label for="skymap">Skymap: </label>
+        </div>
+        <div class="col">
+            <select name="skymap" id="skymap" class="form-control">
+            </select>
         </div>
     </div>
 
@@ -47,13 +133,6 @@ $( function() {
             <input name="detector" class="form-control">
         </div>
 
-        <div class="col">
-            <button type="submit" class="btn btn-primary">Submit</button>
-        </div>
-    </div>
-
-    <div class="mt-2">
-        <p>Or</p>
     </div>
 
     <div class="row row-cols-lg-auto g-3 mt-2 align-items-center">
@@ -71,9 +150,10 @@ $( function() {
             <input name="patch" class="form-control">
         </div>
 
-        <div class="col">
-            <button type="submit" class="btn btn-primary">Submit</button>
-        </div>
+    </div>
+
+    <div class="mt-2">
+        <button type="submit" class="btn btn-primary">Submit</button>
     </div>
   </form>
 

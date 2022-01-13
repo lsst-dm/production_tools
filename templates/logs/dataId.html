@@ -24,7 +24,7 @@
                                                       aria-expanded="false"
                                                       aria-controls="log_body_{{loop.index}}"
                                                       data-uuid="{{ log['uuid'] }}">
-               {{ log['datasetName'] }}
+               {{ log['datasetName'] }} &mdash; {{log['dataId'] }}
            </button>
        </h3>
       <div class="accordion-collapse collapse" id="log_body_{{ loop.index }}"

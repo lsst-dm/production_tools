@@ -21,16 +21,18 @@
 
 import os
 import sys
+
 import lsst.daf.butler as dafButler
 from flask import Blueprint, Flask, jsonify, render_template, request
 
 bp = Blueprint("logs", __name__, url_prefix="/logs")
 
 try:
-    BUTLER_URI = os.environ['BUTLER_URI']
+    BUTLER_URI = os.environ["BUTLER_URI"]
 except KeyError:
     print("Must set environment variable BUTLER_URI")
     sys.exit(1)
+
 
 @bp.route("/")
 def index():
@@ -49,31 +51,74 @@ def collections():
     return jsonify(output)
 
 
+@bp.route("/instruments")
+def instruments():
+    butler = dafButler.Butler(BUTLER_URI)
+
+    instrument_recs = butler.registry.queryDimensionRecords("instrument")
+    return jsonify([record.name for record in instrument_recs])
+
+
+@bp.route("/skymaps")
+def skymaps():
+    butler = dafButler.Butler(BUTLER_URI)
+
+    # It would be nice for this to constrain on collection, but not implemented yet.
+    skymap_recs = butler.registry.queryDimensionRecords("skymap")
+    return jsonify([record.name for record in skymap_recs])
+
+
 @bp.route("/dataId")
 def dataId():
     butler = dafButler.Butler(BUTLER_URI)
 
     collection = request.args.get("collection")
 
-    dimensions = ["visit", "detector", "tract", "patch"]
-    dataId = {"instrument": "LSSTCam-imSim"}
-    for dim in dimensions:
-        value = request.args.get(dim, type=int)
-        if value is not None:
-            dataId[dim] = value
-
     if collection is None:
         return "Must specify a collection"
+
+    dimension_types = {
+        "visit": int,
+        "detector": int,
+        "tract": int,
+        "patch": int,
+        "skymap": str,
+        "instrument": str,
+    }
+    dataId = {}
+    for dim_name, dim_type in dimension_types.items():
+        value = request.args.get(dim_name, type=dim_type)
+        if value is not None:
+            dataId[dim_name] = value
+
+    # Visit or exposure.
+    if "visit" in dataId:
+        dataId["exposure"] = dataId["visit"]
 
     dataId_string = ", ".join(
         "{:s} {}".format(dim.capitalize(), val) for (dim, val) in dataId.items()
     )
 
-    dataRefs = butler.registry.queryDatasets(
-        "*_log", dataId=dataId, collections=collection
+    try:
+        dataRefs = butler.registry.queryDatasets(
+            "*_log", dataId=dataId, collections=collection
+        )
+    except LookupError as e:
+        return str(e)
+
+    dimensions_to_confirm = set(["visit", "detector", "tract", "patch", "instrument"])
+
+    filtered_dataRefs = (
+        ref
+        for ref in dataRefs
+        if set(ref.datasetType.dimensions).intersection(dimensions_to_confirm)
+        == (set(dataId.keys()).intersection(dimensions_to_confirm))
     )
 
-    logs = [{"datasetName": x.datasetType.name, "uuid": x.id} for x in dataRefs]
+    logs = [
+        {"datasetName": ref.datasetType.name, "uuid": ref.id, "dataId": ref.dataId}
+        for ref in filtered_dataRefs
+    ]
 
     return render_template(
         "logs/dataId.html", dataId=dataId_string, collection=collection, logs=logs
@@ -89,5 +134,9 @@ def logfile():
 
     uuid = request.args.get("uuid")
     datasetRef = butler.registry.getDataset(uuid)
-    logs = butler.getDirect(datasetRef)
+    try:
+        logs = butler.getDirect(datasetRef)
+    except Exception as e:
+        return "Failed to access log file: {}".format(str(e))
+
     return render_template("logs/messages.html", logs=logs)
