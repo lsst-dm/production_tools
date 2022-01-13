@@ -10,7 +10,6 @@ RUN conda install -y -q pip wheel
 
 COPY requirements.txt /app/production-tools/requirements.txt
 RUN pip install -r /app/production-tools/requirements.txt
-RUN pip install pydantic # Temporary
 
 COPY . /app/production-tools/
 

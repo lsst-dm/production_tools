@@ -3,4 +3,5 @@ git+https://github.com/lsst/daf_butler@main#egg=daf_butler
 textdistance>4
 jellyfish
 google-cloud-storage
+gunicorn
 
