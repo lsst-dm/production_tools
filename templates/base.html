@@ -5,7 +5,7 @@
 <link rel="icon" href="{{ url_for('static', filename='rubin-favicon-transparent-32px.png') }}">
 {% block additional_refs %}{% endblock %}
 <nav id="header" class="navbar navbar-expand-md navbar-dark bg-dark sticky-top shadow px-4">
-    <a class="navbar-brand" href="">Rubin Production Tools</a>
+    <a class="navbar-brand" href="{{ url_for('index') }}">Rubin Production Tools</a>
     <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-2">
         <li class="nav-item">
             <a class="nav-link {{ "active" if active_page=="errors" }}" href="{{ url_for('errors.index') }}">Errors</a>

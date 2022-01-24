@@ -129,8 +129,11 @@ def download_logs(bucket_name, prefix, year, month, day):
                 os.makedirs(os.path.dirname(cache_filename), exist_ok=True)
                 bucket_file.download_to_filename(cache_filename, if_etag_not_match=etag)
 
-            with open(cache_filename, "r") as f:
-                json_string = f.read()
+            try:
+                with open(cache_filename, "r") as f:
+                    json_string = f.read()
+            except FileNotFoundError:
+                json_string = bucket_file.download_as_string().decode()
 
         for line in json_string.split("\n"):
             if len(line) == 0:

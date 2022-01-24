@@ -11,7 +11,7 @@
 <p>Available tools</p>
 <ul>
     {% for link in tools %}
-    <li><a href="">{{ link }}</a>
+    <li><a href="{{ url_for(link + '.index') }}">{{ link }}</a>
     {% endfor %}
 </ul>
 
