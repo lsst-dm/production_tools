@@ -4,6 +4,7 @@ textdistance>4
 jellyfish
 google-cloud-storage
 gunicorn
+psycopg2
 boto3
 botocore
 
