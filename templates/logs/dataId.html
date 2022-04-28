@@ -37,9 +37,11 @@
 </div>
 <script>
 
+var logfile_url = "{{ url_for('logs.logfile') }}";
+
 function fetchLogs(event) {
     if($.trim($("#log_messages_" + event.data.uuid).html()) == "") {
-        fetch('/logs/logfile?uuid=' + event.data.uuid)
+        fetch(logfile_url + '?uuid=' + event.data.uuid)
                 .then(response => response.text())
                 .then(text => {
                         $("#log_messages_" + event.data.uuid).html(text);
