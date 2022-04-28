@@ -16,8 +16,11 @@
 {% block content %}
 <script>
 
+var instruments_url = "{{ url_for('logs.instruments') }}";
+var skymaps_url = "{{ url_for('logs.skymaps') }}";
+
 function updateSkymapInstrument(event, ui) {
-    fetch('/logs/instruments')
+    fetch(instruments_url)
         .then(response => response.json())
         .then(instruments => {
                 selectedIndex = $("select#instrument")[0].options.selectedIndex;
@@ -30,7 +33,7 @@ function updateSkymapInstrument(event, ui) {
                 }
             });
 
-    fetch('/logs/skymaps')
+    fetch(skymaps_url)
         .then(response => response.json())
         .then(skymaps => {
                 selectedIndex = $("select#skymap")[0].options.selectedIndex;
