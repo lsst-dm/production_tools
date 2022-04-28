@@ -2,7 +2,7 @@ FROM continuumio/miniconda3:4.10.3
 
 RUN apt-get --allow-releaseinfo-change update && \
     apt-get install -y \
-        build-essential \
+        build-essential libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 RUN conda install -y -q pip wheel
