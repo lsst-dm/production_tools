@@ -33,6 +33,11 @@ except KeyError:
     print("Must set environment variable BUTLER_URI")
     sys.exit(1)
 
+global_butler = dafButler.Butler(BUTLER_URI)
+
+def get_butler():
+    return global_butler
+
 
 @bp.route("/")
 def index():
@@ -43,7 +48,7 @@ def index():
 def collections():
     search_term = request.args.get("term")
 
-    butler = dafButler.Butler(BUTLER_URI)
+    butler = get_butler()
     output = []
     for collection in butler.registry.queryCollections(search_term + "*"):
         output.append({"id": collection, "label": collection, "value": collection})
@@ -53,7 +58,7 @@ def collections():
 
 @bp.route("/instruments")
 def instruments():
-    butler = dafButler.Butler(BUTLER_URI)
+    butler = get_butler()
 
     instrument_recs = butler.registry.queryDimensionRecords("instrument")
     return jsonify([record.name for record in instrument_recs])
@@ -61,7 +66,7 @@ def instruments():
 
 @bp.route("/skymaps")
 def skymaps():
-    butler = dafButler.Butler(BUTLER_URI)
+    butler = get_butler()
 
     # It would be nice for this to constrain on collection, but not implemented yet.
     skymap_recs = butler.registry.queryDimensionRecords("skymap")
@@ -70,7 +75,7 @@ def skymaps():
 
 @bp.route("/dataId")
 def dataId():
-    butler = dafButler.Butler(BUTLER_URI)
+    butler = get_butler()
 
     collection = request.args.get("collection")
 
@@ -127,7 +132,7 @@ def dataId():
 
 @bp.route("/logfile")
 def logfile():
-    butler = dafButler.Butler(BUTLER_URI)
+    butler = get_butler()
     message_template = """
     <p>{{severity}} - {{message}}</p>
     """
