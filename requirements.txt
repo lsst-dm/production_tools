@@ -7,5 +7,5 @@ gunicorn
 psycopg2
 boto3
 botocore
-eventlet=0.30
+eventlet<0.30.3
 
