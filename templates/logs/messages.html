@@ -2,7 +2,7 @@
     <table class="table-borderless">
     {% for log in logs %}
     <tr>
-        <td class="align-top">{{log.levelname }}</td>
+        <td class="align-top" style="padding-right: 1em;">{{log.levelname }}</td>
         <td>{{log.name}}: {{log.message}}</td>
     </tr>
     {% endfor %}
