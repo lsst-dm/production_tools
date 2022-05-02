@@ -83,6 +83,7 @@ def dataId():
         return "Must specify a collection"
 
     dimension_types = {
+        "exposure": int,
         "visit": int,
         "detector": int,
         "tract": int,
@@ -96,34 +97,33 @@ def dataId():
         if value is not None:
             dataId[dim_name] = value
 
-    # Visit or exposure.
-    if "visit" in dataId:
-        dataId["exposure"] = dataId["visit"]
+    required_dimensions = (set(dataId.keys()) - set(["skymap", "instrument"]))
+    log_types = butler.registry.queryDatasetTypes("*_log")
+    target_dataset_types = filter(lambda datasetType: all([dimension in datasetType.dimensions
+                                                           for dimension in required_dimensions]), log_types)
+    dataRefs = []
+    try:
+        for dataset_type in target_dataset_types:
+            dataRefs.extend(butler.registry.queryDatasets(dataset_type, dataId=dataId, collections=collection))
+    except dafButler.registry.MissingCollectionError as e:
+
+        return render_template(
+            "logs/dataId.html", collection=collection, error=str(e),
+        )
+
+    except LookupError as e:
+        return render_template(
+            "logs/dataId.html", collection=collection, error=str(e),
+        )
+
+    logs = [
+        {"datasetName": ref.datasetType.name, "uuid": ref.id, "dataId": ref.dataId}
+        for ref in dataRefs
+    ]
 
     dataId_string = ", ".join(
         "{:s} {}".format(dim.capitalize(), val) for (dim, val) in dataId.items()
     )
-
-    try:
-        dataRefs = butler.registry.queryDatasets(
-            "*_log", dataId=dataId, collections=collection
-        )
-    except LookupError as e:
-        return str(e)
-
-    dimensions_to_confirm = set(["visit", "detector", "tract", "patch", "instrument"])
-
-    filtered_dataRefs = (
-        ref
-        for ref in dataRefs
-        if set(ref.datasetType.dimensions).intersection(dimensions_to_confirm)
-        == (set(dataId.keys()).intersection(dimensions_to_confirm))
-    )
-
-    logs = [
-        {"datasetName": ref.datasetType.name, "uuid": ref.id, "dataId": ref.dataId}
-        for ref in filtered_dataRefs
-    ]
 
     return render_template(
         "logs/dataId.html", dataId=dataId_string, collection=collection, logs=logs
