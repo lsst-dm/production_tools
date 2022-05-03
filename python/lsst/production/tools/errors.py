@@ -23,15 +23,21 @@ import datetime
 import json
 import os
 import re
+import yaml
 from collections import defaultdict
+from dataclasses import dataclass
 
 import google.api_core.exceptions
-from flask import Blueprint, Flask, render_template
+from flask import Blueprint, Flask, render_template, url_for
 from google.cloud import storage
 from textdistance import levenshtein
 
 bp = Blueprint("errors", __name__, url_prefix="/errors")
 
+@dataclass(frozen=True)
+class LogMessageDataId:
+    text: str
+    url: str
 
 # LOG_BUCKET="drp-us-central1-logging"
 # LOG_PREFIX="panda-rubinlog"
@@ -62,6 +68,18 @@ def find_matching_messages(new_message, message_list):
 
     return None
 
+def parse_MDC_label(label_string):
+    """Transform labels of the form `forcedPhotDiffim:{instrument: 'LSSTCam-imSim', skymap: 'DC2',
+    detector: 25, tract: 4860, visit: 1223203, ...}` into a
+    (task name, data id dictionary) pair.
+    """
+
+    divider_pos = label_string.find(":")
+    task_name = label_string[:divider_pos]
+    data_id_string = label_string[(divider_pos + 1):]
+    data_id_dict = dict(yaml.safe_load(data_id_string))
+    return (task_name, data_id_dict)
+
 
 def parse_logs_into_summary(logs):
 
@@ -83,7 +101,9 @@ def parse_logs_into_summary(logs):
             if msg_key is None:
                 msg_key = message
 
-            messages[msg_key].add(label)
+            task_name, dataId = parse_MDC_label(label)
+            msg_obj = LogMessageDataId(text=label, url=url_for('logs.dataId', collection=run_name, **dataId))
+            messages[msg_key].add(msg_obj)
 
         output = {"run_name": run_name, "messages": messages}
 

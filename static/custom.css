@@ -3,3 +3,8 @@
     font-size: 1.7em;
 }
 
+a:not(:hover).subdued {
+    color: black;
+    text-decoration: none;
+}
+

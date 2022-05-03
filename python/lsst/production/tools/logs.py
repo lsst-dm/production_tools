@@ -105,16 +105,12 @@ def dataId():
     try:
         for dataset_type in target_dataset_types:
             dataRefs.extend(butler.registry.queryDatasets(dataset_type, dataId=dataId, collections=collection))
-    except dafButler.registry.MissingCollectionError as e:
+    except (dafButler.registry.RegistryError) as e:
 
         return render_template(
             "logs/dataId.html", collection=collection, error=str(e),
         )
 
-    except LookupError as e:
-        return render_template(
-            "logs/dataId.html", collection=collection, error=str(e),
-        )
 
     logs = [
         {"datasetName": ref.datasetType.name, "uuid": ref.id, "dataId": ref.dataId}
