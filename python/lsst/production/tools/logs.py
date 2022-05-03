@@ -102,8 +102,13 @@ def dataId():
     target_dataset_types = filter(lambda datasetType: all([dimension in datasetType.dimensions
                                                            for dimension in required_dimensions]), log_types)
     dataRefs = []
+    error_string = ""
     try:
         for dataset_type in target_dataset_types:
+            if(len(dataRefs) > 200):
+                error_string = "Large number of datasets selected; results truncated."
+                break
+
             dataRefs.extend(butler.registry.queryDatasets(dataset_type, dataId=dataId, collections=collection))
     except (dafButler.registry.RegistryError) as e:
 
@@ -122,7 +127,7 @@ def dataId():
     )
 
     return render_template(
-        "logs/dataId.html", dataId=dataId_string, collection=collection, logs=logs
+        "logs/dataId.html", dataId=dataId_string, collection=collection, logs=logs, error=error_string,
     )
 
 
