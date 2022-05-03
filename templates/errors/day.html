@@ -16,7 +16,7 @@
     <ul>
         {% for label in message_labels %}
             {% if loop.index <= 10 %}
-                <li class="">{{ label }}
+                <li class=""><a class="subdued" href={{label.url}}>{{ label.text }}</a>
             {% elif loop.index == 11 %}
                 <li>And {{ message_labels|count - 10 }} more dataIds</a>
             {% endif %}
