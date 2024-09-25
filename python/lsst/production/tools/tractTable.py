@@ -19,25 +19,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from flask import Flask, render_template
 
-from . import tractTable, errors, logs
+from flask import Blueprint, Flask, render_template, url_for
+bp = Blueprint("metrics", __name__, url_prefix="/metrics")
 
+@bp.route("/")
+def tracts():
 
-def create_app():
-    app = Flask(
-        "production-tools",
-    )
+    bands = ['g','r','i','z','y']
 
-    app.register_blueprint(logs.bp)
-    app.register_blueprint(errors.bp)
-    app.register_blueprint(tractTable.bp)
+    tracts = [{"number": 9812}, {"number": 1234}, {"number": 9000}]
 
-    @app.route("/")
-    def index():
-        return render_template("index.html", tools=["metrics", "logs", "errors"])
-
-    return app
+    return render_template("metrics/tracts.html", tracts=tracts, bands=bands)
 
 
-__all__ = [tractTable, logs, errors, create_app]
+
