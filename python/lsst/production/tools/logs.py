@@ -33,7 +33,7 @@ except KeyError:
     print("Must set environment variable BUTLER_URI")
     sys.exit(1)
 
-global_butler = dafButler.Butler(BUTLER_URI)
+#global_butler = dafButler.Butler(BUTLER_URI)
 
 def get_butler():
     return global_butler

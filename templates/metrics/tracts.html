@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% set active_page="metrics" %}
+
+{% block title %}Tract Metrics{% endblock %}
+
+
+{% block header %}Tract Metric Summaries{% endblock %}
+
+{% block content %}
+
+<table>
+    <thead>
+        <tr>
+        </tr>
+    </thead>
+    {% for tract in tracts %}
+    <tr>
+        <td>{{tract['number']}}</td>
+        <td>
+            {% for band in bands %}
+            <b>{{band}}</b>: 3:</br>
+            {% endfor %}
+        </td>
+    </tr>
+    {% endfor %}
+
+</table>
+
+{% endblock %}
