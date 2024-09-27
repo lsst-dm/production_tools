@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% set active_page="metrics" %}
+
+{% block title %}Metric Navigator{% endblock %}
+
+
+{% block header %}Metric Navigator{% endblock %}
+
+{% block content %}
+
+<ul>
+    {% for entry in collection_entries %}
+    <li><a href="{{ url_for("metrics.collection", collection_name=entry["url"]) }}">
+            {{entry["name"]}}
+        </a>
+    </li>
+    {% endfor %}
+</ul>
+
+{% endblock %}

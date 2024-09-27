@@ -21,16 +21,56 @@
 
 
 from flask import Blueprint, Flask, render_template, url_for
+import urllib.parse
 bp = Blueprint("metrics", __name__, url_prefix="/metrics")
 
+NO_BUTLER = True
+
 @bp.route("/")
-def tracts():
+def index():
+
+    collection_names = ["HSC/runs/RC2/w_2024_38"]
+
+    collection_entries = [{"name": name, "url": urllib.parse.quote(name, safe='')} for name in collection_names]
+
+    return render_template("metrics/index.html",
+                           collection_entries=collection_entries)
+
+
+@bp.route("/collection/<collection_urlencoded>")
+def collection(collection_urlencoded):
+
+    collection = urllib.parse.unquote(collection_urlencoded)
 
     bands = ['g','r','i','z','y']
 
-    tracts = [{"number": 9812}, {"number": 1234}, {"number": 9000}]
+    # tracts = [{"number": 9812}, {"number": 1234}, {"number": 9000}]
+
+    if not NO_BUTLER:
+        butler = Butler("/repo/main")
+        dataId = {"skymap": "hsc_rings_v1", "instrument": "HSC"}
+        metricsTable = butler.get("objectTableCore_metricsTable", collections=collection, dataId=dataId)
+    else:
+        # Load metricsTable from a file
+
+    tracts = metricsTable['tract']
 
     return render_template("metrics/tracts.html", tracts=tracts, bands=bands)
+
+@bp.route("/histograms/<collection_name>")
+def histograms(collection_name):
+
+    bands = ['g','r','i','z','y']
+
+    return render_template("metrics/histograms.html")
+
+
+@bp.route("/tract/<collection_name>/<tract>")
+def single_tract(collection_name, tract):
+
+    collection_name = urllib.parse.unquote(collection_name)
+
+    return render_template("metrics/single_tract.html", tract=tract)
 
 
 
