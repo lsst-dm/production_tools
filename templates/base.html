@@ -8,10 +8,10 @@
     <a class="navbar-brand" href="{{ url_for('index') }}">Rubin Production Tools</a>
     <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-2">
         <li class="nav-item">
-            <a class="nav-link {{ "active" if active_page=="errors" }}" href="{{ url_for('errors.index') }}">Errors</a>
+            <a class="nav-link {{ "active" if active_page=="logs" }}" href="{{ url_for('logs.index') }}">Logs</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {{ "active" if active_page=="logs" }}" href="{{ url_for('logs.index') }}">Logs</a>
+            <a class="nav-link {{ "active" if active_page=="metrics" }}" href="{{ url_for('metrics.index') }}">Metrics</a>
         </li>
         <li class="nav-item">
             <a class="nav-link" href="/plot-navigator">Plots</a>
