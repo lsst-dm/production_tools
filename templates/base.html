@@ -16,6 +16,9 @@
         <li class="nav-item">
             <a class="nav-link" href="/plot-navigator">Plots</a>
         </li>
+        <li class="nav-item">
+            <a class="nav-link {{ "active" if active_page=="bokeh" }}" href="{{ url_for('bokeh.index') }}">Bokeh</a>
+        </li>
     </ul>
 </nav>
 <section class="content">

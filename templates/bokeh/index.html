@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% set active_page="bokeh" %}
+
+{% block additional_refs %}
+{{ resources |safe }}
+{% endblock %}
+
+{% block title %}Live Plots{% endblock %}
+
+
+{% block header %}Live Plots{% endblock %}
+
+{% block content %}
+
+{{ debug_text }}<br/>
+
+<div id="plotdiv"></div>
+<script>
+fetch('plot1')
+.then(function(response) { return response.json(); })
+.then(function(item) { return Bokeh.embed.embed_item(item, "plotdiv"); })
+</script>
+
+{% endblock %}

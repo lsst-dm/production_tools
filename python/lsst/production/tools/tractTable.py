@@ -50,7 +50,6 @@ def collection(collection_urlencoded):
         butler = Butler("/repo/main")
         dataId = {"skymap": "hsc_rings_v1", "instrument": "HSC"}
         metricsTable = butler.get("objectTableCore_metricsTable", collections=collection, dataId=dataId)
-    else:
         # Load metricsTable from a file
 
     tracts = metricsTable['tract']
