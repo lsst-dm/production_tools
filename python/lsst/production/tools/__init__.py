@@ -21,7 +21,7 @@
 
 from flask import Flask, render_template
 
-from . import tractTable, errors, logs
+from . import tractTable, logs
 
 
 def create_app():
@@ -30,14 +30,13 @@ def create_app():
     )
 
     app.register_blueprint(logs.bp)
-    app.register_blueprint(errors.bp)
     app.register_blueprint(tractTable.bp)
 
     @app.route("/")
     def index():
-        return render_template("index.html", tools=["metrics", "logs", "errors"])
+        return render_template("index.html", tools=["metrics", "logs"])
 
     return app
 
 
-__all__ = [tractTable, logs, errors, create_app]
+__all__ = [tractTable, logs, create_app]
