@@ -8,3 +8,66 @@ a:not(:hover).subdued {
     text-decoration: none;
 }
 
+TH {
+        border:2px solid black;
+        text-align: center;
+        border-collapse: separate;
+        background-color: #058B8C;
+        position: sticky;
+        top: 0;
+        color: #FFFFFF;
+        font-family: sans-serif;
+        font-weight: bold;
+        padding: 2pt;
+        min-width: 200px;
+}
+
+a:link {
+        color: #000000;
+        text-decoration: none;
+}
+
+a:visited{
+        color: #000000;
+}
+
+.nanValue {
+        color: #CC5500;
+}
+
+.badValue {
+        color: #CD1717;
+        background: #CC5500;
+        padding: 1pt;
+        font-weight: bold;
+}
+
+TABLE {
+        border-collapse: collapse;
+        column-width: 20%;
+        table-layout: fixed;
+}
+
+TD {
+        font-size: 10pt;
+        font-family: monospace;
+        text-align: center;
+        padding: 2pt;
+        color: #909B9C;
+}
+
+TD.summary {
+        font-size: 10pt;
+        font-family: monospace;
+        text-align: center;
+        padding: 2pt;
+        color: #909B9C;
+}
+
+.tract {
+        color: #FFFFFF;
+        background: #058B8C;
+        font-weight: bold;
+        padding: 2pt;
+}
+
