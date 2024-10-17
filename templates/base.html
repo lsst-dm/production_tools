@@ -1,8 +1,8 @@
 <!doctype html>
 <title>Rubin Production Tools</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='custom.css') }}">
-<link rel="icon" href="{{ url_for('static', filename='rubin-favicon-transparent-32px.png') }}">
+<link rel="stylesheet" href="{{ url_for('.static', filename='bootstrap.min.css') }}">
+<link rel="stylesheet" href="{{ url_for('.static', filename='custom.css') }}">
+<link rel="icon" href="{{ url_for('.static', filename='rubin-favicon-transparent-32px.png') }}">
 {% block additional_refs %}{% endblock %}
 <nav id="header" class="navbar navbar-expand-md navbar-dark bg-dark sticky-top shadow px-4">
     <a class="navbar-brand" href="{{ url_for('index') }}">Rubin Production Tools</a>
