@@ -27,11 +27,11 @@ from flask import Blueprint, Flask, jsonify, render_template, request
 
 bp = Blueprint("logs", __name__, url_prefix="/logs")
 
-try:
-    BUTLER_URI = os.environ["BUTLER_URI"]
-except KeyError:
-    print("Must set environment variable BUTLER_URI")
-    sys.exit(1)
+#try:
+#    BUTLER_URI = os.environ["BUTLER_URI"]
+#except KeyError:
+#    print("Must set environment variable BUTLER_URI")
+#    sys.exit(1)
 
 #global_butler = dafButler.Butler(BUTLER_URI)
 

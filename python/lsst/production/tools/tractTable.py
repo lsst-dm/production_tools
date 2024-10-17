@@ -25,7 +25,7 @@ from flask import Blueprint, Flask, render_template, url_for
 import numpy as np
 import urllib.parse
 import yaml
-bp = Blueprint("metrics", __name__, url_prefix="/metrics")
+bp = Blueprint("metrics", __name__, url_prefix="/plot-navigator/metrics")
 
 NO_BUTLER = True
 
