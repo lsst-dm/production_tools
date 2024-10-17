@@ -1,4 +1,4 @@
-FROM continuumio/miniconda3:4.10.3
+FROM continuumio/miniconda3:24.7.1-0
 
 RUN apt-get --allow-releaseinfo-change update && \
     apt-get install -y \
