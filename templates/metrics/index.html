@@ -10,7 +10,7 @@
 
 <ul>
     {% for entry in collection_entries %}
-    <li><a href="{{ url_for("metrics.collection", collection_name=entry["url"]) }}">
+    <li><a href="{{ url_for("metrics.collection", collection_urlencoded=entry["url"]) }}">
             {{entry["name"]}}
         </a>
     </li>

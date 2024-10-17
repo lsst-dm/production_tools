@@ -7,6 +7,23 @@
 {% block header %}Tract {{tract}} Summary{% endblock %}
 
 {% block content %}
+<table>
+    <thead>
+        <tr>
+        {% for header in headerDict %}
+            <th><a href={{url_for(headerDict[header])}}>{{header|safe}}</a></th>
+        {% endfor %}
+        </tr>
+    </thead>
+    {% for tract in contentDict %}
+    <tr>
+        {% for cell in contentDict[tract] %}
+        <td>{{cell|safe}}</td>
+        {% endfor %}
+    </tr>
+    {% endfor %}
+
+</table>
 
 
 {% endblock %}
