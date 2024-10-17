@@ -1,7 +1,5 @@
 flask>2
 lsst-daf-butler
-textdistance[extras]>4
-jellyfish
 gunicorn
 psycopg2
 boto3
