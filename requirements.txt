@@ -1,8 +1,7 @@
 flask>2
-git+https://github.com/lsst/daf_butler@main#egg=daf_butler
+lsst-daf-butler
 textdistance[extras]>4
 jellyfish
-google-cloud-storage
 gunicorn
 psycopg2
 boto3
