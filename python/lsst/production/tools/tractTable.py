@@ -25,6 +25,10 @@ from flask import Blueprint, Flask, render_template, url_for
 import numpy as np
 import urllib.parse
 import yaml
+import boto3
+import botocore
+import os
+
 bp = Blueprint("metrics", __name__, url_prefix="/plot-navigator/metrics", static_folder="../../../../static")
 
 NO_BUTLER = True
@@ -189,8 +193,19 @@ def collection(collection_urlencoded):
     butler = Butler("/repo/main")
     dataId = {"skymap": "hsc_rings_v1", "instrument": "HSC"}
     t = butler.get("objectTableCore_metricsTable", collections=collection, dataId=dataId)
-    with open("../../metricThresholds/metricInformation.yaml", "r") as filename:
-        metricDefs = yaml.safe_load(filename)
+
+    # with open("../../metricThresholds/metricInformation.yaml", "r") as filename:
+    #     metricDefs = yaml.safe_load(filename)
+
+    session = boto3.Session(profile_name='rubin-plot-navigator')
+    s3_client = session.client('s3', endpoint_url=os.getenv("S3_ENDPOINT_URL"))
+
+    metric_threshold_filename = "metricInformation.yaml"
+    try:
+        response = s3_client.get_object(Bucket='rubin-plot-navigator', Key=metric_threshold_filename)
+        metricDefs = yaml.safe_load(response["Body"])
+    except botocore.exceptions.ClientError as e:
+        print(e)
 
 
     headerDict, bands = mkTableHeaders(t)
