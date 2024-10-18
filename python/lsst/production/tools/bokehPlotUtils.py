@@ -4,6 +4,7 @@ from astropy.table import vstack, Table
 import math
 import numpy as np
 import pandas as pd
+from dataclasses import dataclass
 
 import bokeh
 import bokeh.palettes as palettes
@@ -16,8 +17,8 @@ from bokeh.models.annotations import Span, BoxAnnotation, Label
 from bokeh.plotting import figure, reset_output
 from bokeh.transform import factor_cmap, factor_mark, transform
 
-from lsst.afw.cameraGeom import FOCAL_PLANE
-from lsst.pipe.base import Struct
+#from lsst.afw.cameraGeom import FOCAL_PLANE
+#from lsst.pipe.base import Struct
 
 # This is a collection of plotting utilities, mostly for creating standalone
 # interactive Bokeh plots of various visit-level, per-detector parameters and
@@ -260,6 +261,16 @@ def setAxisLimitsDict(instrument=None, threshStruct=None):
     return axisLimitsDict
 
 
+@dataclass
+class TaskConfigParams:
+    maxMeanDistanceArcsec: float
+    maxEllipResidual: float
+    maxScaledSizeScatter: float
+    maxPsfTraceRadiusDelta: float
+    maxPsfTraceRadiusSigmaScaledDelta: float
+    maxPsfApFluxDelta: float
+    maxPsfApCorrSigmaScaledDelta: float
+
 def introspectConfigs(instrument=None, butler=None):
     # Stack Defaults:
     maxMeanDistanceArcsec = 0.5
@@ -334,7 +345,7 @@ def introspectConfigs(instrument=None, butler=None):
             maxPsfApFluxDelta = 0.075
             maxPsfApCorrSigmaScaledDelta = 0.118
 
-    return Struct(
+    return TaskConfigParams(
         maxMeanDistanceArcsec=maxMeanDistanceArcsec,
         maxEllipResidual=maxEllipResidual,
         maxScaledSizeScatter=maxScaledSizeScatter,

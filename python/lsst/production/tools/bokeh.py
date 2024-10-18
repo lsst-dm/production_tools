@@ -22,7 +22,7 @@
 from datetime import datetime, timezone
 from flask import Blueprint, Flask, render_template, url_for
 import urllib.parse
-bp = Blueprint("bokeh", __name__, url_prefix="/bokeh")
+bp = Blueprint("bokeh", __name__, url_prefix="/plot-navigator/bokeh", static_folder="../../../../static")
 
 from bokeh.embed import json_item
 from bokeh.plotting import figure
