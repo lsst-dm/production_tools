@@ -2,7 +2,7 @@ FROM continuumio/miniconda3:24.7.1-0
 
 RUN apt-get --allow-releaseinfo-change update && \
     apt-get install -y \
-        build-essential libpq-dev netbase \
+        build-essential libpq-dev netbase curl \
     && rm -rf /var/lib/apt/lists/*
 
 RUN conda install -y -q pip wheel
