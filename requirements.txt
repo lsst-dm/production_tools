@@ -1,4 +1,4 @@
-flask>2
+flask[async]
 lsst-daf-butler
 lsst-efd-client
 lsst-pex-config
@@ -9,4 +9,5 @@ botocore
 eventlet
 bokeh
 numpy>=1.26.0
+arq
 
