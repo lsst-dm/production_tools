@@ -4,17 +4,22 @@
 <link rel="stylesheet" href="{{ url_for('.static', filename='custom.css') }}">
 <link rel="icon" href="{{ url_for('.static', filename='rubin-favicon-transparent-32px.png') }}">
 {% block additional_refs %}{% endblock %}
-<nav id="header" class="navbar navbar-expand-md navbar-dark bg-dark sticky-top shadow px-4">
-    <a class="navbar-brand" href="{{ url_for('index') }}">Rubin Production Tools</a>
+<nav id="header" class="navbar navbar-expand-md navbar-dark bg-black sticky-top shadow px-4">
+    <a class="navbar-brand" href="{{ url_for('index') }}">Rubin Plot Navigator</a>
     <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-2">
+        <li class="nav-item">
+            <a class="nav-link" href="/plot-navigator">Plots</a>
+        </li>
+        <!--
         <li class="nav-item">
             <a class="nav-link {{ "active" if active_page=="logs" }}" href="{{ url_for('logs.index') }}">Logs</a>
         </li>
+        -->
         <li class="nav-item">
             <a class="nav-link {{ "active" if active_page=="metrics" }}" href="{{ url_for('metrics.index') }}">Metrics</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="/plot-navigator">Plots</a>
+            <a class="nav-link {{ "active" if active_page=="bokeh" }}" href="{{ url_for('bokeh.index') }}">Bokeh</a>
         </li>
     </ul>
 </nav>

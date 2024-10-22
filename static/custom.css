@@ -1,6 +1,15 @@
 .navbar-brand {
     color: #058b8c !important;
-    font-size: 1.7em;
+    font-size: 1.875rem;
+}
+
+.nav-item {
+    color: rgba(255, 255, 255,1);
+    font-size: 1.25rem;
+}
+.nav-link {
+    color: rgba(255, 255, 255,1.0);
+    font-size: 1.25rem;
 }
 
 a:not(:hover).subdued {

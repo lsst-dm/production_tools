@@ -1,8 +1,13 @@
-flask>2
+flask[async]
 lsst-daf-butler
+lsst-efd-client
+lsst-pex-config
 gunicorn
 psycopg2
 boto3
 botocore
 eventlet
+bokeh
+numpy>=1.26.0
+arq
 
