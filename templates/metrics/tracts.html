@@ -10,14 +10,14 @@
 <table>
     <thead>
         <tr>
-        {% for header in headerDict %}
-            <th><a href={{url_for(headerDict[header])}}>{{header|safe}}</a></th>
+        {% for header in header_dict %}
+            <th><a href={{url_for(header_dict[header])}}>{{header|safe}}</a></th>
         {% endfor %}
         </tr>
     </thead>
-    {% for tract in contentDict %}
+    {% for tract in content_dict %}
     <tr>
-        {% for cell in contentDict[tract] %}
+        {% for cell in content_dict[tract] %}
         <td>{{cell|safe}}</td>
         {% endfor %}
     </tr>
