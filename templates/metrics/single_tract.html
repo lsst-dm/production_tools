@@ -9,23 +9,6 @@
 {% block content %}
 
 <table>
-    <thead>
-        <tr>
-            <td><a href={{url_for(histograms)}}>Tract</a></td>
-            <td><a href={{url_for(histograms)}}>nPatches</a></td>
-        </tr>
-    </thead>
-    {% for tract in tracts %}
-    <tr>
-        <td>{{tract['number']}}</td>
-        <td>
-            {% for band in bands %}
-            <b>{{band}}</b>: 3:</br>
-            {% endfor %}
-        </td>
-    </tr>
-    {% endfor %}
-
 </table>
 
 {% endblock %}
