@@ -82,7 +82,6 @@ def collection(collection_urlencoded):
         "stellar_locus_cols": ["yPerp", "wPerp", "xPerp"],
         "sky_cols": ["skyFluxStatisticMetric"],
     }
-
     session = boto3.Session(profile_name="rubin-plot-navigator")
     s3_client = session.client("s3", endpoint_url=os.getenv("S3_ENDPOINT_URL"))
 
@@ -104,10 +103,9 @@ def collection(collection_urlencoded):
         row_list = []
         row_list.append(mk_tract_cell(tract))
 
-        # Add a nan/bad summary cell next but need to calculate these numbers first
-        row_list.append("0")
         # Add a summary plot in the i band of the tract
         row_list.append(mk_summary_plot_cell(tract))
+        # Add the number of patches
         row_list.append(mk_patch_num_cell(t, n, bands))
         # Add the number of inputs
         row_list.append(mk_num_inputs_cell(t, metric_defs, n, bands))
@@ -177,4 +175,7 @@ def single_tract(collection_name, tract):
     return render_template("metrics/single_tract.html", tract=tract)
 
 
+@bp.route("/report/<collection_name>/<metric>")
+def report_page(collection_name, metric):
 
+    return render_template("metrics/report_page.html")
