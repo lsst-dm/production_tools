@@ -36,16 +36,27 @@ a:link {
         text-decoration: none;
 }
 
-a:visited{
+a:visited {
         color: #000000;
 }
+
+a.tableHeader:link, a.tableHeader:visited {
+        color: #FFFFFF;
+        text-decoration: none;
+}
+
+a.tableLink:link, a.tableLink:visited {
+        color: #909B9C;
+        text-decoration: none;
+}
+
 
 .nanValue {
         color: #CC5500;
 }
 
 .badValue {
-        color: #CD1717;
+        color: #000000;
         background: #CC5500;
         padding: 1pt;
         font-weight: bold;
