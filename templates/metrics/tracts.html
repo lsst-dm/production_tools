@@ -8,22 +8,44 @@
 
 {% block content %}
 <table>
+
     <thead>
         <tr>
         {% for header in header_dict %}
-            <th><a href={{url_for(header_dict[header])}}>{{header|safe}}</a></th>
+            <th>
+            <a href={{url_for(header_dict[header], collection_name=collection_urlencoded)}} class=tableHeader>
+            {{header|safe}}
+            </a>
+            </th>
         {% endfor %}
         </tr>
     </thead>
+
     {% for tract in content_dict %}
-    <tr>
-        {% for cell in content_dict[tract] %}
-        <td>{{cell|safe}}</td>
+        <tr>
+        <td>
+        <a href={{url_for(content_dict[tract][0][0], collection_name=collection_urlencoded, tract=tract)}}>
+        {{tract}}
+        </a>
+        </td>
+        {% for cell in content_dict[tract][1:] %}
+            {% if cell|length == 1 %}
+                <td>{{cell[0]|safe}}</td>
+            {% else %}
+                {% if 'badValue' in cell[0] %}
+                    <td>
+                    <a href={{url_for(cell[1], collection_name=collection_urlencoded, metric=cell[2])}}
+                        class=tableLink>
+                    {{cell[0]|safe}}
+                    </a>
+                    </td>
+                {% else %}
+                    <td>{{cell[0]|safe}}</td>
+                {% endif %}
+            {% endif %}
         {% endfor %}
-    </tr>
+        </tr>
     {% endfor %}
 
 </table>
-
-
 {% endblock %}
