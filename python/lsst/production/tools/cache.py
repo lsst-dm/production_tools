@@ -42,7 +42,8 @@ bp = Blueprint("cache", __name__, url_prefix="/plot-navigator/cache", static_fol
 @bp.route("/", methods=["PUT"])
 async def index():
     redis_settings = arq.connections.RedisSettings(host=os.getenv("REDIS_HOST"),
-                                                   port=os.getenv("REDIS_PORT"))
+                                                   port=os.getenv("REDIS_PORT"),
+                                                   password=os.getenv("REDIS_PASSWORD"))
 
     redis = await arq.create_pool(redis_settings)
     print(f"cache.index() received request: {request}")
@@ -59,7 +60,8 @@ async def index():
 async def job(job_id):
 
     redis_settings = arq.connections.RedisSettings(host=os.getenv("REDIS_HOST"),
-                                                   port=os.getenv("REDIS_PORT"))
+                                                   port=os.getenv("REDIS_PORT"),
+                                                   password=os.getenv("REDIS_PASSWORD"))
 
     redis = await arq.create_pool(redis_settings)
     arq_job = arq.jobs.Job(job_id=job_id, redis=redis)
@@ -101,7 +103,8 @@ async def cache_plots(ctx, repo, collection):
 class Worker:
     functions = [cache_plots]
     redis_settings = arq.connections.RedisSettings(host=os.getenv("REDIS_HOST"),
-                                                   port=os.getenv("REDIS_PORT"))
+                                                   port=os.getenv("REDIS_PORT"),
+                                                   password=os.getenv("REDIS_PASSWORD"))
 
 
 def summarize_collection(butler, collection_name):
