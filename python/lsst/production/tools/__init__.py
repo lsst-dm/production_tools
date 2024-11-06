@@ -21,7 +21,7 @@
 
 from flask import Flask, render_template
 
-from . import tractTable, logs, bokeh, cache
+from . import tractTable, logs, bokeh, cache, images
 
 
 def create_app():
@@ -33,6 +33,7 @@ def create_app():
     app.register_blueprint(tractTable.bp)
     app.register_blueprint(bokeh.bp)
     app.register_blueprint(cache.bp)
+    app.register_blueprint(images.bp)
 
     @app.route("/")
     def index():
@@ -41,4 +42,4 @@ def create_app():
     return app
 
 
-__all__ = [tractTable, logs, bokeh, create_app, cache]
+__all__ = [tractTable, logs, bokeh, create_app, cache, images]
