@@ -38,8 +38,6 @@ bp = Blueprint(
     static_folder="../../../../static",
 )
 
-NO_BUTLER = True
-
 
 @bp.route("/")
 def index():
@@ -114,7 +112,7 @@ def collection(collection_urlencoded):
         cell_vals = []
         # Get the number of failed values and prep cell contents
         for cell_val, bad_val, link, debug_group in mk_shape_cols(
-            t, metric_defs, n, bands, col_dict
+            t, metric_defs, n, bands, col_dict["shape_cols"]
         ):
             cell_vals.append((cell_val, link, debug_group))
             if bad_val is not None:
@@ -122,7 +120,7 @@ def collection(collection_urlencoded):
 
         # Make the cell details for the stellar locus columns
         for cell_val, bad_val, link, debug_group in mk_stellar_locus_cols(
-            t, metric_defs, n, col_dict
+            t, metric_defs, n, col_dict["stellar_locus_cols"]
         ):
             cell_vals.append((cell_val, link, debug_group))
             if bad_val is not None:
@@ -130,7 +128,7 @@ def collection(collection_urlencoded):
 
         # Make the cell contents for the photometry columns
         for cell_val, bad_val, link, debug_group in mk_photom_cols(
-            t, metric_defs, n, bands, col_dict
+            t, metric_defs, n, bands, col_dict["photom_cols"]
         ):
             cell_vals.append((cell_val, link, debug_group))
             if bad_val is not None:
@@ -138,7 +136,7 @@ def collection(collection_urlencoded):
 
         # Make the cell contents for the sky columns
         for cell_val, bad_val, link, debug_group in mk_sky_cols(
-            t, metric_defs, n, bands, col_dict
+            t, metric_defs, n, bands, col_dict["sky_cols"]
         ):
             cell_vals.append((cell_val, link, debug_group))
             if bad_val is not None:
