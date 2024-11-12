@@ -26,6 +26,8 @@ from werkzeug.routing import BaseConverter
 from . import tractTable, logs, bokeh, cache, images
 
 
+# This works like the built-in 'path' converter, but
+# allows an initial forward slash in the parameter.
 class UrlConverter(BaseConverter):
 
     part_isolating = False

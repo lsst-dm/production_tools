@@ -20,12 +20,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-from flask import Blueprint, Flask, render_template, url_for, send_file, g
-import numpy as np
-import urllib.parse
-import yaml
-import boto3
-import botocore
+from flask import Blueprint, send_file, g
 import os
 import io
 
@@ -44,39 +39,6 @@ def get_butler_map(repo):
         g.butler_map[repo] = Butler(repo)
 
     return g.butler_map[repo]
-
-
-@bp.route("/dataId/<repo>/<collection>/<plot_name>/<data_id>")
-def dataId(repo, collection, plot_name, data_id):
-
-    repo_decoded = urllib.parse.unquote(repo)
-    collection_decoded = urllib.parse.unquote(collection)
-    plot_name_decoded = urllib.parse.unquote(plot_name)
-    data_id_decoded = urllib.parse.unquote(data_id)
-
-    if repo_decoded not in REPO_NAMES:
-        return {'error': 'Invalid repo'}, 400
-
-
-    butler = get_butler_map(repo_decoded)
-
-    try:
-        dataset_refs = butler.query_datasets(plot_name_decoded, collections=collection_decoded,
-                                             data_id=JSON.decode(data_id_decoded))
-    except:
-        raise
-
-    if len(dataset_refs) == 0:
-        return {"error": "No datasets found"}, 404
-
-    resource_path = ResourcePath(butler.getURI(dataset_refs[0]))
-
-    if dataset_ref.datasetType.storageClass_name != "Plot":
-        return {"error": "Storage class of dataset is not 'Plot'"}, 400
-
-    image = io.BytesIO(resource_path.read())
-    return send_file(image, mimetype="image/png")
-
 
 @bp.route("/uuid/<url:repo>/<uuid>")
 def index(repo, uuid):
