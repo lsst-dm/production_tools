@@ -20,19 +20,38 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from flask import Flask, render_template
+import urllib.parse
+from werkzeug.routing import BaseConverter
 
-from . import tractTable, logs, bokeh, cache
+from . import tractTable, logs, bokeh, cache, images
 
+
+# This works like the built-in 'path' converter, but
+# allows an initial forward slash in the parameter.
+class UrlConverter(BaseConverter):
+
+    part_isolating = False
+    regex = ".*?"
+
+    def to_python(self, value):
+        print(value)
+        return urllib.parse.unquote(value)
+
+    def to_url(self, value):
+        return urllib.parse.quote_plus(value)
 
 def create_app():
     app = Flask(
         "production-tools",
     )
+    app.url_map.converters['url'] = UrlConverter
 
     app.register_blueprint(logs.bp)
     app.register_blueprint(tractTable.bp)
     app.register_blueprint(bokeh.bp)
     app.register_blueprint(cache.bp)
+    app.register_blueprint(images.bp)
+
 
     @app.route("/")
     def index():
@@ -41,4 +60,4 @@ def create_app():
     return app
 
 
-__all__ = [tractTable, logs, bokeh, create_app, cache]
+__all__ = [tractTable, logs, bokeh, create_app, cache, images]
