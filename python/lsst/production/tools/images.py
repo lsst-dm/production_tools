@@ -78,11 +78,11 @@ def dataId(repo, collection, plot_name, data_id):
     return send_file(image, mimetype="image/png")
 
 
-@bp.route("/uuid/<repo>/<uuid>")
+@bp.route("/uuid/<url:repo>/<uuid>")
 def index(repo, uuid):
 
     if repo not in REPO_NAMES:
-        return {'error': 'Invalid repo'}, 400
+        return {"error": f"Invalid repo {repo}"}, 400
 
     butler = get_butler_map(repo)
     dataset_ref = butler.get_dataset(DatasetId(uuid))
