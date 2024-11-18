@@ -23,7 +23,7 @@ from flask import Flask, render_template
 import urllib.parse
 from werkzeug.routing import BaseConverter
 
-from . import tractTable, logs, bokeh, cache, images
+from . import tractTable, logs, bokeh, cache, images, htmlUtils
 
 
 # This works like the built-in 'path' converter, but
