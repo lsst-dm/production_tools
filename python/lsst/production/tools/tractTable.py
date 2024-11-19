@@ -38,22 +38,71 @@ bp = Blueprint(
     static_folder="../../../../static",
 )
 
+REPO_NAMES = os.getenv("BUTLER_REPO_NAMES").split(",")
+
+
+def shorten_repo(repo_name):
+    """
+    Return the repo name without any '/repo/' prefix
+    """
+    return repo_name.split('/')[-1]
+
 
 @bp.route("/")
 def index():
 
-    collection_names = ["u/sr525/metricsPlotsPDR2_wholeSky"]
+    #collection_names = ["u/sr525/metricsPlotsPDR2_wholeSky"]
+    official_collection_entries = []
+    user_collection_entries = []
 
-    collection_entries = [
-        {"name": name, "url": urllib.parse.quote(name, safe="")}
-        for name in collection_names
-    ]
+    session = boto3.Session(profile_name="rubin-plot-navigator")
+    s3_client = session.client("s3", endpoint_url=os.getenv("S3_ENDPOINT_URL"))
 
-    return render_template("metrics/index.html", collection_entries=collection_entries)
+    try:
+
+        is_truncated = True
+        marker = ""
+
+        while is_truncated:
+            response = s3_client.list_objects(
+                Bucket="rubin-plot-navigator",
+                Marker=marker
+            )
+            is_truncated = response['IsTruncated']
+            print(f"Number of responses {len(response['Contents'])} truncated {is_truncated}")
+            for entry in response['Contents']:
+                marker = entry['Key']
+                for repo in REPO_NAMES:
+                    repo_encoded = urllib.parse.quote_plus(repo)
+
+                    if entry['Key'].startswith(repo_encoded):
+                        collection_enc = entry['Key'].replace(repo_encoded + "/collection_", "", 1).replace(".json.gz", "")
+                        collection = urllib.parse.unquote(collection_enc)
+
+                        if collection.startswith('u'):
+                            user_collection_entries.append({"name": collection,
+                                                            "updated": entry['LastModified'],
+                                                            "repo": shorten_repo(repo), "url":
+                                                            urllib.parse.quote(collection, safe="")})
+                        else:
+                            official_collection_entries.append({"name": collection,
+                                                                "updated": entry['LastModified'],
+                                                                "repo": shorten_repo(repo), "url":
+                                                                urllib.parse.quote(collection, safe="")})
 
 
-@bp.route("/collection/<collection_urlencoded>")
-def collection(collection_urlencoded):
+    except botocore.exceptions.ClientError as e:
+        print(e)
+
+    official_collection_entries.sort(key=lambda x: x['updated'], reverse=True)
+    user_collection_entries.sort(key=lambda x: x['updated'], reverse=True)
+
+    return render_template("metrics/index.html", collection_entries=official_collection_entries,
+                           user_collection_entries=user_collection_entries)
+
+
+@bp.route("/collection/<repo>/<url:collection>")
+def collection(repo, collection):
     """Make all the information needed to supply to the template
     for the tract summary table.
 
@@ -63,12 +112,31 @@ def collection(collection_urlencoded):
 
     The thresholds for the metrics are in the metricDefs
     yaml file.
+
+    The repo name provided must not contain slashes, so the supplied
+    repo name is matched against possible values in the REPO_NAMES
+    environment variable after removing any '/repo/' prefix from
+    those names.
     """
 
-    collection = urllib.parse.unquote(collection_urlencoded)
+    expanded_repo_name = None
 
-    butler = Butler("/repo/main")
-    dataId = {"skymap": "hsc_rings_v1", "instrument": "HSC"}
+    if repo in REPO_NAMES:
+        expanded_repo_name = repo
+    else:
+        for test_name in REPO_NAMES:
+            if(repo == test_name.split('/')[-1]):
+                expanded_repo_name = f"/repo/{repo}"
+
+    if not expanded_repo_name:
+        return {"error": f"Invalid repo name {repo}, collection {collection}"}, 404
+
+    butler = Butler(expanded_repo_name)
+    if(expanded_repo_name == "/repo/main"):
+        dataId = {"skymap": "hsc_rings_v1", "instrument": "HSC"}
+    else:
+        dataId = {"skymap": "lsst_cells_v1", "instrument": "LSSTComCam"}
+
     t = butler.get(
         "objectTableCore_metricsTable", collections=collection, dataId=dataId
     )
@@ -153,7 +221,7 @@ def collection(collection_urlencoded):
         "metrics/tracts.html",
         header_dict=header_dict,
         content_dict=content_dict,
-        collection_urlencoded=collection_urlencoded,
+        collection=collection,
     )
 
 
