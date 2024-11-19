@@ -34,7 +34,6 @@ class UrlConverter(BaseConverter):
     regex = ".*?"
 
     def to_python(self, value):
-        print(value)
         return urllib.parse.unquote(value)
 
     def to_url(self, value):
