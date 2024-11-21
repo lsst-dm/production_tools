@@ -29,16 +29,14 @@ def mk_table_value(row, metric_defs, val_col_name, sig_col_name):
 
     Parameters
     ----------
-    t : `astropy.table.Table`
-        Table of metrics
+    row : `astropy.table.Table`
+        A row of the metric table
     metric_defs : `dict`
         A dictionary of metrics and their thresholds
     val_col_name : `str`
         The name of the metric column
     sig_col_name : `str`
         The associated sigma column
-    n : `n`
-        The row number
 
     Returns
     -------
@@ -206,15 +204,13 @@ def mk_summary_plot_cell(tract):
     return (plot_str,)
 
 
-def mk_patch_num_cell(t, n, bands):
+def mk_patch_num_cell(row, bands):
     """Make patch number cell content
 
     Parameters
     ----------
-     t : `astropy.table.Table`
-        Table of metrics
-    n : `n`
-        The row number
+     row : `astropy.table.Table`
+        A row of the metric table
     bands : `list`
         A list of the bands the metrics are in
 
@@ -227,25 +223,26 @@ def mk_patch_num_cell(t, n, bands):
     for band in ["u", "g", "r", "i", "z", "y"]:
         if band in bands:
             patch_col = "coaddPatchCount_" + band + "_patchCount"
-            patch_str += "<B>" + band + "</B>: " + str(int(t[patch_col][n])) + "<BR>\n"
+            if patch_col in row.columns:
+                patch_str += "<B>" + band + "</B>: " + str(int(row[patch_col])) + "<BR>\n"
+            else:
+                patch_str += "-"
 
     return (patch_str,)
 
 
-def mk_shape_cols(t, metric_defs, n, bands, cols):
+def mk_shape_cols(row, metric_defs, bands, cols):
     """Make shape column cell contents
 
     Parameters
     ----------
-    t : `astropy.table.Table`
-        Table of metrics
+    row : `astropy.table.Table`
+        A row from the metric table
     metric_defs : `dict`
         A dictionary of metrics and their thresholds
-    n : `n`
-        The row number
     bands : `list`
         A list of the bands the metrics are in
-    cols : `list`
+    cols : `list`0
         A list of columns to format
 
     Returns
@@ -264,7 +261,7 @@ def mk_shape_cols(t, metric_defs, n, bands, cols):
                     val_col_name = col + "_" + band + "_" + sn + "_median"
                     sig_col_name = col + "_" + band + "_" + sn + "_sigmaMad"
                     val_str, sig_str, bad_val, link, debug_group = mk_table_value(
-                        t[n], metric_defs, val_col_name, sig_col_name
+                        row, metric_defs, val_col_name, sig_col_name
                     )
                     num_bad += bad_val
                     shape_str += (
@@ -277,17 +274,15 @@ def mk_shape_cols(t, metric_defs, n, bands, cols):
     return shape_strs
 
 
-def mk_stellar_locus_cols(t, metric_defs, n, cols):
+def mk_stellar_locus_cols(row, metric_defs, cols):
     """Make stellar locus column cell contents
 
     Parameters
     ----------
-    t : `astropy.table.Table`
-        Table of metrics
+    row : `astropy.table.Table`
+        A row from the metric table
     metric_defs : `dict`
         A dictionary of metrics and their thresholds
-    n : `n`
-        The row number
     cols : `list`
         A list of the columns to format
 
@@ -307,19 +302,11 @@ def mk_stellar_locus_cols(t, metric_defs, n, cols):
             val_col_name = col + flux1 + "_" + col + "_" + flux + "_median"
             sig_col_name = col + flux1 + "_" + col + "_" + flux + "_sigmaMAD"
             val_str, sig_str, bad_val, link, debug_group = mk_table_value(
-                t[n], metric_defs, val_col_name, sig_col_name
+                row, metric_defs, val_col_name, sig_col_name
             )
             if val_str is None:
                 continue
-            row_str += (
-                "<B>"
-                + flux
-                + "</B><BR><B>Med</B>: "
-                + val_str
-                + "  <B>&sigma;</B>: "
-                + sig_str
-                + "<BR>"
-            )
+            row_str += f"<B>{flux}</B><BR><B>Med</B>: {val_str}  <B>&sigma;</B>: {sig_str}<BR>"
             row_str += "<BR>\n"
             num_bad += bad_val
             if debug_group is not None:
@@ -329,17 +316,15 @@ def mk_stellar_locus_cols(t, metric_defs, n, cols):
     return row_strs
 
 
-def mk_num_inputs_cell(t, metric_defs, n, bands):
+def mk_num_inputs_cell(row, metric_defs, bands):
     """Format the number of inputs cell
 
     Parameters
     ----------
-    t : `astropy.table.Table`
-        Table of metrics
+    row : `astropy.table.Table`
+        A row from the table of metrics
     metric_defs : `dict`
         A dictionary of metrics and their thresholds
-    n : `n`
-        The row number
     bands : `list`
         A list of the bands the metrics are in
 
@@ -356,7 +341,7 @@ def mk_num_inputs_cell(t, metric_defs, n, bands):
             sig_col_name = "coaddInputCount_" + band + "_inputCount_sigmaMad"
 
             val_str, sig_str, _, _, _ = mk_table_value(
-                t[n], metric_defs, val_col_name, sig_col_name
+                row, metric_defs, val_col_name, sig_col_name
             )
             row_str += "<B>" + band + "</B>:" + val_str + " <B>&sigma;</B> "
             row_str += sig_str + "<BR>\n"
@@ -364,13 +349,13 @@ def mk_num_inputs_cell(t, metric_defs, n, bands):
     return (row_str,)
 
 
-def mk_photom_cols(t, metric_defs, n, bands, cols):
+def mk_photom_cols(row, metric_defs, bands, cols):
     """Make photometry column cell contents
 
     Parameters
     ----------
-    t : `astropy.table.Table`
-        Table of metrics
+    row : `astropy.table.Table`
+        A row from the table of metrics
     metric_defs : `dict`
         A dictionary of metrics and their thresholds
     n : `n`
@@ -396,7 +381,7 @@ def mk_photom_cols(t, metric_defs, n, bands, cols):
                     val_col_name = col + "_" + band + "_" + part + "_median"
                     sig_col_name = col + "_" + band + "_" + part + "_sigmaMad"
                     val_str, sig_str, bad_val, link, debug_group = mk_table_value(
-                        t[n], metric_defs, val_col_name, sig_col_name
+                        row, metric_defs, val_col_name, sig_col_name
                     )
             else:
                 val_str = None
@@ -413,17 +398,15 @@ def mk_photom_cols(t, metric_defs, n, bands, cols):
     return row_strs
 
 
-def mk_sky_cols(t, metric_defs, n, bands, cols):
+def mk_sky_cols(row, metric_defs, bands, cols):
     """Make sky column cell content
 
     Parameters
     ----------
-    t : `astropy.table.Table`
-        Table of metrics
+    row : `astropy.table.Table`
+        A row from the table of metrics
     metric_defs : `dict`
         A dictionary of metrics and their thresholds
-    n : `n`
-        The row number
     bands : `list`
         A list of the bands the metrics are in
     cols : `list`
@@ -445,22 +428,14 @@ def mk_sky_cols(t, metric_defs, n, bands, cols):
                     val_col_name = col + "_" + band + "_" + stat + "Sky"
                     sig_col_name = col + "_" + band + "_" + dev + "Sky"
                     val_str, sig_str, bad_val, link, debug_group = mk_table_value(
-                        t[n], metric_defs, val_col_name, sig_col_name
+                        row, metric_defs, val_col_name, sig_col_name
                     )
                 else:
                     val_str = None
 
                 if val_str is None:
                     continue
-                row_str += (
-                    "<B>"
-                    + band
-                    + "</B>: "
-                    + val_str
-                    + "  <B>&sigma;</B>: "
-                    + sig_str
-                    + "<BR>\n"
-                )
+                row_str += f"<B>{band}</B>: {val_str} <B>&sigma;</B>: {sig_str}<BR>\n"
             num_bad += bad_val
             if debug_group is not None:
                 debug_group_all = debug_group
