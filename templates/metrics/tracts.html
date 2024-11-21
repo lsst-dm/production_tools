@@ -8,8 +8,15 @@
 
 {% block content %}
 
+
+<h2>{{collection}}</h2>
 <a href={{url_for(".index")}}>&lt;-- Back to collections</a>
 <table>
+
+    {% if error %}
+        <br/><br/>
+        <h3>{{error}}</h3>
+    {% endif %}
 
     <thead>
         <tr>

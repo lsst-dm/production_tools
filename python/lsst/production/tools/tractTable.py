@@ -27,7 +27,7 @@ import botocore
 import numpy as np
 import yaml
 from flask import Blueprint, Flask, render_template, url_for
-from lsst.daf.butler import Butler
+from lsst.daf.butler import Butler, DatasetNotFoundError, MissingDatasetTypeError
 
 from .htmlUtils import *
 
@@ -137,9 +137,19 @@ def collection(repo, collection):
     else:
         dataId = {"skymap": "lsst_cells_v1", "instrument": "LSSTComCam"}
 
-    t = butler.get(
-        "objectTableCore_metricsTable", collections=collection, dataId=dataId
-    )
+    try:
+        t = butler.get(
+            "objectTableCore_metricsTable", collections=collection, dataId=dataId
+        )
+    except (DatasetNotFoundError, MissingDatasetTypeError):
+        return render_template(
+            "metrics/tracts.html",
+            header_dict={},
+            content_dict={},
+            collection=collection,
+            error="Collection does not have dataset objectTableCore_metricsTable"
+        )
+
 
     col_dict = {
         "table_cols": ["tract", "corners", "nPatches", "nInputs", "failed metrics"],

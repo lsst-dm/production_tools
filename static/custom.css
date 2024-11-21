@@ -74,6 +74,7 @@ TD {
         text-align: center;
         padding: 2pt;
         color: #909B9C;
+        padding-bottom: 0.5em;
 }
 
 TD.summary {
