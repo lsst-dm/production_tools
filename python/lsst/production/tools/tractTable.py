@@ -45,13 +45,13 @@ def shorten_repo(repo_name):
     """
     Return the repo name without any '/repo/' prefix
     """
-    return repo_name.split('/')[-1]
+    return repo_name.split("/")[-1]
 
 
 @bp.route("/")
 def index():
 
-    #collection_names = ["u/sr525/metricsPlotsPDR2_wholeSky"]
+    # collection_names = ["u/sr525/metricsPlotsPDR2_wholeSky"]
     official_collection_entries = []
     user_collection_entries = []
 
@@ -65,40 +65,55 @@ def index():
 
         while is_truncated:
             response = s3_client.list_objects(
-                Bucket="rubin-plot-navigator",
-                Marker=marker
+                Bucket="rubin-plot-navigator", Marker=marker
             )
-            is_truncated = response['IsTruncated']
-            print(f"Number of responses {len(response['Contents'])} truncated {is_truncated}")
-            for entry in response['Contents']:
-                marker = entry['Key']
+            is_truncated = response["IsTruncated"]
+            print(
+                f"Number of responses {len(response['Contents'])} truncated {is_truncated}"
+            )
+            for entry in response["Contents"]:
+                marker = entry["Key"]
                 for repo in REPO_NAMES:
                     repo_encoded = urllib.parse.quote_plus(repo)
 
-                    if entry['Key'].startswith(repo_encoded):
-                        collection_enc = entry['Key'].replace(repo_encoded + "/collection_", "", 1).replace(".json.gz", "")
+                    if entry["Key"].startswith(repo_encoded):
+                        collection_enc = (
+                            entry["Key"]
+                            .replace(repo_encoded + "/collection_", "", 1)
+                            .replace(".json.gz", "")
+                        )
                         collection = urllib.parse.unquote(collection_enc)
 
-                        if collection.startswith('u'):
-                            user_collection_entries.append({"name": collection,
-                                                            "updated": entry['LastModified'],
-                                                            "repo": shorten_repo(repo), "url":
-                                                            urllib.parse.quote(collection, safe="")})
+                        if collection.startswith("u"):
+                            user_collection_entries.append(
+                                {
+                                    "name": collection,
+                                    "updated": entry["LastModified"],
+                                    "repo": shorten_repo(repo),
+                                    "url": urllib.parse.quote(collection, safe=""),
+                                }
+                            )
                         else:
-                            official_collection_entries.append({"name": collection,
-                                                                "updated": entry['LastModified'],
-                                                                "repo": shorten_repo(repo), "url":
-                                                                urllib.parse.quote(collection, safe="")})
-
+                            official_collection_entries.append(
+                                {
+                                    "name": collection,
+                                    "updated": entry["LastModified"],
+                                    "repo": shorten_repo(repo),
+                                    "url": urllib.parse.quote(collection, safe=""),
+                                }
+                            )
 
     except botocore.exceptions.ClientError as e:
         print(e)
 
-    official_collection_entries.sort(key=lambda x: x['updated'], reverse=True)
-    user_collection_entries.sort(key=lambda x: x['updated'], reverse=True)
+    official_collection_entries.sort(key=lambda x: x["updated"], reverse=True)
+    user_collection_entries.sort(key=lambda x: x["updated"], reverse=True)
 
-    return render_template("metrics/index.html", collection_entries=official_collection_entries,
-                           user_collection_entries=user_collection_entries)
+    return render_template(
+        "metrics/index.html",
+        collection_entries=official_collection_entries,
+        user_collection_entries=user_collection_entries,
+    )
 
 
 @bp.route("/collection/<repo>/<url:collection>")
@@ -125,14 +140,14 @@ def collection(repo, collection):
         expanded_repo_name = repo
     else:
         for test_name in REPO_NAMES:
-            if(repo == test_name.split('/')[-1]):
+            if repo == test_name.split("/")[-1]:
                 expanded_repo_name = f"/repo/{repo}"
 
     if not expanded_repo_name:
         return {"error": f"Invalid repo name {repo}, collection {collection}"}, 404
 
     butler = Butler(expanded_repo_name)
-    if(expanded_repo_name == "/repo/main"):
+    if expanded_repo_name == "/repo/main":
         dataId = {"skymap": "hsc_rings_v1", "instrument": "HSC"}
     else:
         dataId = {"skymap": "lsst_cells_v1", "instrument": "LSSTComCam"}
@@ -179,39 +194,39 @@ def collection(repo, collection):
         num_bad = 0
         cell_vals = []
         # Get the number of failed values and prep cell contents
-        for cell_val, bad_val, link, debug_group in mk_shape_cols(
-            t, metric_defs, n, bands, col_dict["shape_cols"]
+        for shape_cell in mk_shape_cols(
+            t[n], metric_defs, bands, col_dict["shape_cols"]
         ):
-            cell_vals.append((cell_val, link, debug_group))
-            if bad_val is not None:
-                num_bad += bad_val
+            cell_vals.append(shape_cell)
+            if shape_cell.num_fails is not None:
+                num_bad += shape_cell.num_fails
 
         # Make the cell details for the stellar locus columns
-        for cell_val, bad_val, link, debug_group in mk_stellar_locus_cols(
+        for sl_cell in mk_stellar_locus_cols(
             t, metric_defs, n, col_dict["stellar_locus_cols"]
         ):
-            cell_vals.append((cell_val, link, debug_group))
-            if bad_val is not None:
-                num_bad += bad_val
+            cell_vals.append(sl_cell)
+            if sl_cell.num_fails is not None:
+                num_bad += sl_cell.num_fails
 
         # Make the cell contents for the photometry columns
-        for cell_val, bad_val, link, debug_group in mk_photom_cols(
+        for photom_cell in mk_photom_cols(
             t, metric_defs, n, bands, col_dict["photom_cols"]
         ):
-            cell_vals.append((cell_val, link, debug_group))
-            if bad_val is not None:
-                num_bad += bad_val
+            cell_vals.append(photom_cell)
+            if photom_cell.num_fails is not None:
+                num_bad += photom_cell.num_fails
 
         # Make the cell contents for the sky columns
-        for cell_val, bad_val, link, debug_group in mk_sky_cols(
-            t, metric_defs, n, bands, col_dict["sky_cols"]
-        ):
-            cell_vals.append((cell_val, link, debug_group))
-            if bad_val is not None:
-                num_bad += bad_val
+        for sky_cell in mk_sky_cols(t, metric_defs, n, bands, col_dict["sky_cols"]):
+            cell_vals.append(sky_cell)
+            if sky_cell.num_fails is not None:
+                num_bad += sky_cell.num_fails
 
         # Add a nan/bad summary cell next but need to calculate these numbers first
-        row_list.append((num_bad,))
+        bad_cell = cell_contents()
+        bad_cell.text = str(num_bad)
+        row_list.append(bad_cell)
         for val in cell_vals:
             row_list.append(val)
 
