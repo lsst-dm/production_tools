@@ -23,6 +23,26 @@
 import numpy as np
 
 
+class cell_entry:
+
+    def __init__(self):
+
+        self.num_bad = 0
+        self.link = "noInfo"
+        self.debug_group = None
+        self.val_str = None
+        self.sig_str = None
+
+
+class cell_contents:
+
+    def __init__(self):
+        self.num_fails = 0
+        self.text = ""
+        self.link = "noInfo"
+        self.debug_group = None
+
+
 def mk_table_value(row, metric_defs, val_col_name, sig_col_name):
     """Turn the values from the given columns into
     formatted cell contents.
@@ -59,54 +79,56 @@ def mk_table_value(row, metric_defs, val_col_name, sig_col_name):
     isn't in the table.
     """
 
+    cell = cell_entry()
     # Make a string of the val and sig columns
     if val_col_name in row.columns and sig_col_name in row.columns:
         val = row[val_col_name]
-        val_str = f"{val:.3g}"
+        cell.val_str = f"{val:.3g}"
         sig = row[sig_col_name]
-        sig_str = f"{sig:.3g}"
+        cell.sig_str = f"{sig:.3g}"
     elif val_col_name in row.columns and sig_col_name not in row.columns:
         val = row[val_col_name]
-        val_str = f"{val:.3g}"
+        cell.val_str = f"{val:.3g}"
         sig = None
-        sig_str = "-"
+        cell.sig_str = "-"
     elif val_col_name not in row.columns and sig_col_name in row.columns:
-        val_str = "-"
+        cell.val_str = "-"
         val = None
         sig = row[sig_col_name]
-        sig_str = f"{sig:.3g}"
+        cell.sig_str = f"{sig:.3g}"
     else:
-        return None, None, None, None, None
+        return cell
 
     bad_val = 0
 
-    link = "metrics.report_page"
+    cell.link = "metrics.report_page"
     if val_col_name in metric_defs:
-        debug_group = metric_defs[val_col_name]["debugGroup"]
+        cell.debug_group = metric_defs[val_col_name]["debugGroup"]
     else:
-        debug_group = None
+        cell.debug_group = None
 
     # Add formatting to the string if there are thresholds
     # for the metric
     if np.isnan(val):
-        val_str = f"<FONT CLASS=nanValue>{val:.3g} </FONT>"
+        cell.val_str = f"<FONT CLASS=nanValue>{val:.3g} </FONT>"
     if np.isnan(sig):
-        sig_str = f"<FONT CLASS=nanValue>{sig:.3g}</FONT>\n"
+        cell.sig_str = f"<FONT CLASS=nanValue>{sig:.3g}</FONT>\n"
     if val_col_name in metric_defs:
         high_val = metric_defs[val_col_name]["highThreshold"]
         low_val = metric_defs[val_col_name]["lowThreshold"]
-        debug_group = metric_defs[val_col_name]["debugGroup"]
+        cell.debug_group = metric_defs[val_col_name]["debugGroup"]
         if val < low_val or val > high_val:
-            val_str = f"<FONT CLASS=badValue>{val:.3g}</FONT>"
+            cell.val_str = f"<FONT CLASS=badValue>{val:.3g}</FONT>"
             bad_val += 1
     if sig_col_name in metric_defs:
         high_sig = metric_defs[sig_col_name]["highThreshold"]
         low_sig = metric_defs[sig_col_name]["lowThreshold"]
         if sig < low_sig or sig > high_sig:
-            sig_str = f"<FONT CLASS=badValue>{sig:.3g}</FONT>\n"
+            cell.sig_str = f"<FONT CLASS=badValue>{sig:.3g}</FONT>\n"
             bad_val += 1
 
-    return val_str, sig_str, bad_val, link, debug_group
+    cell.num_bad = bad_val
+    return cell
 
 
 def mk_table_headers(t, col_dict):
@@ -181,9 +203,10 @@ def mk_tract_cell(tract):
     tract_str : `str`
         The link that the tract should go to
     """
-    tract_str = "metrics.single_tract"
+    cell = cell_contents()
+    cell.text = "metrics.single_tract"
 
-    return (tract_str,)
+    return cell
 
 
 def mk_summary_plot_cell(tract):
@@ -202,8 +225,9 @@ def mk_summary_plot_cell(tract):
     This needs updating with a plot navigator link
     """
     # plot_str = "<IMG SRC='static/summaryCalexp_" + str(tract) + "_i.png' CLASS=thumbnail>"
-    plot_str = "nav link needed"
-    return (plot_str,)
+    cell = cell_contents()
+    cell.text = "nav link needed"
+    return cell
 
 
 def mk_patch_num_cell(t, n, bands):
@@ -223,26 +247,26 @@ def mk_patch_num_cell(t, n, bands):
     patch_str : `str`
         The formatted number of patches in each band
     """
+    cell = cell_contents()
     patch_str = ""
     for band in ["u", "g", "r", "i", "z", "y"]:
         if band in bands:
             patch_col = "coaddPatchCount_" + band + "_patchCount"
             patch_str += "<B>" + band + "</B>: " + str(int(t[patch_col][n])) + "<BR>\n"
 
-    return (patch_str,)
+    cell.text = patch_str
+    return cell
 
 
-def mk_shape_cols(t, metric_defs, n, bands, cols):
+def mk_shape_cols(row, metric_defs, bands, cols):
     """Make shape column cell contents
 
     Parameters
     ----------
-    t : `astropy.table.Table`
-        Table of metrics
+    row : `astropy.table.Table`
+        A row of the metrics table
     metric_defs : `dict`
         A dictionary of metrics and their thresholds
-    n : `n`
-        The row number
     bands : `list`
         A list of the bands the metrics are in
     cols : `list`
@@ -253,28 +277,26 @@ def mk_shape_cols(t, metric_defs, n, bands, cols):
     shape_strs : `tuple` of `str`
         A tuple of the formatted strings for the shape columns
     """
-    shape_strs = []
+    shape_cells = []
     for col in cols:
         for sn in ["highSNStars", "lowSNStars"]:
-            shape_str = ""
-            num_bad = 0
             debug_group_all = None
+            full_cell = cell_contents()
             for band in ["u", "g", "r", "i", "z", "y"]:
                 if band in bands:
                     val_col_name = col + "_" + band + "_" + sn + "_median"
                     sig_col_name = col + "_" + band + "_" + sn + "_sigmaMad"
-                    val_str, sig_str, bad_val, link, debug_group = mk_table_value(
-                        t[n], metric_defs, val_col_name, sig_col_name
+                    cell_entry = mk_table_value(
+                        row, metric_defs, val_col_name, sig_col_name
                     )
-                    num_bad += bad_val
-                    shape_str += (
-                        "<B>" + band + f"</B>: " + val_str + "  <B>&sigma;</B>: "
-                    )
-                    shape_str += sig_str + "<BR>\n"
-                    if debug_group is not None:
-                        debug_group_all = debug_group
-            shape_strs.append((shape_str, num_bad, link, debug_group_all))
-    return shape_strs
+                    full_cell.num_fails += cell_entry.num_bad
+                    full_cell.text += f"<B>{band}</B>: {cell_entry.val_str} "
+                    full_cell.text += f"<B>&sigma;</B>: {cell_entry.sig_str}<BR>\n"
+                    if cell_entry.debug_group is not None:
+                        full_cell.debug_group = cell_entry.debug_group
+                    full_cell.link = cell_entry.link
+            shape_cells.append(full_cell)
+    return shape_cells
 
 
 def mk_stellar_locus_cols(t, metric_defs, n, cols):
@@ -296,37 +318,34 @@ def mk_stellar_locus_cols(t, metric_defs, n, cols):
     row_strs : `tuple` of `str`
         A tuple of the formatted strings for the stellar locus columns
     """
-    row_strs = []
+    row_cells = []
     for col in cols:
-        row_str = ""
-        num_bad = 0
-        debug_group_all = None
         for flux, flux1 in zip(["psfFlux", "cModelFlux"], ["PSF", "CModel"]):
             if (col[0] == "w" or col[0] == "x") and flux1 == "PSF":
                 flux1 += "P"
+            full_cell = cell_contents()
             val_col_name = col + flux1 + "_" + col + "_" + flux + "_median"
             sig_col_name = col + flux1 + "_" + col + "_" + flux + "_sigmaMAD"
-            val_str, sig_str, bad_val, link, debug_group = mk_table_value(
-                t[n], metric_defs, val_col_name, sig_col_name
-            )
-            if val_str is None:
+            cell_entry = mk_table_value(t[n], metric_defs, val_col_name, sig_col_name)
+            if cell_entry.val_str is None:
                 continue
-            row_str += (
+            full_cell.text += (
                 "<B>"
                 + flux
                 + "</B><BR><B>Med</B>: "
-                + val_str
+                + cell_entry.val_str
                 + "  <B>&sigma;</B>: "
-                + sig_str
+                + cell_entry.sig_str
                 + "<BR>"
             )
-            row_str += "<BR>\n"
-            num_bad += bad_val
-            if debug_group is not None:
-                debug_group_all = debug_group
-        row_strs.append((row_str, num_bad, link, debug_group_all))
+            full_cell.text += "<BR>\n"
+            full_cell.num_fails += cell_entry.num_bad
+            if cell_entry.debug_group is not None:
+                full_cell.debug_group = cell_entry.debug_group
+            full_cell.link = cell_entry.link
+        row_cells.append(full_cell)
 
-    return row_strs
+    return row_cells
 
 
 def mk_num_inputs_cell(t, metric_defs, n, bands):
@@ -350,18 +369,21 @@ def mk_num_inputs_cell(t, metric_defs, n, bands):
     """
 
     row_str = ""
+    full_cell = cell_contents()
     for band in ["u", "g", "r", "i", "z", "y"]:
         if band in bands:
             val_col_name = "coaddInputCount_" + band + "_inputCount_median"
             sig_col_name = "coaddInputCount_" + band + "_inputCount_sigmaMad"
 
-            val_str, sig_str, _, _, _ = mk_table_value(
-                t[n], metric_defs, val_col_name, sig_col_name
+            cell_entry = mk_table_value(t[n], metric_defs, val_col_name, sig_col_name)
+            full_cell.text += (
+                "<B>" + band + "</B>:" + cell_entry.val_str + " <B>&sigma;</B> "
             )
-            row_str += "<B>" + band + "</B>:" + val_str + " <B>&sigma;</B> "
-            row_str += sig_str + "<BR>\n"
+            full_cell.text += cell_entry.sig_str + "<BR>\n"
+            if cell_entry.debug_group is not None:
+                full_cell.debug_group = cell_entry.debug_group
 
-    return (row_str,)
+    return full_cell
 
 
 def mk_photom_cols(t, metric_defs, n, bands, cols):
@@ -385,32 +407,26 @@ def mk_photom_cols(t, metric_defs, n, bands, cols):
     row_strs : `tuple` of `str`
         A tuple of the formatted strings for the photometry columns
     """
-    row_strs = []
+    row_cells = []
     for col in cols:
-        row_str = ""
-        num_bad = 0
-        debug_group_all = None
+        full_cell = cell_contents()
         for band in ["u", "g", "r", "i", "z", "y"]:
             if band in bands:
                 for part in ["psf_cModel_diff"]:
                     val_col_name = col + "_" + band + "_" + part + "_median"
                     sig_col_name = col + "_" + band + "_" + part + "_sigmaMad"
-                    val_str, sig_str, bad_val, link, debug_group = mk_table_value(
+                    cell_entry = mk_table_value(
                         t[n], metric_defs, val_col_name, sig_col_name
                     )
-            else:
-                val_str = None
-                sig_str = None
 
-            if val_str is None:
-                continue
-            row_str += f"<B>{band}</B>: {val_str}  <B>&sigma;</B>: {sig_str}<BR>\n"
-            num_bad += bad_val
-            if debug_group is not None:
-                debug_group_all = debug_group
-        row_strs.append((row_str, num_bad, link, debug_group_all))
+                    full_cell.text += f"<B>{band}</B>: {cell_entry.val_str}  "
+                    full_cell.text += f"<B>&sigma;</B>: {cell_entry.sig_str}<BR>\n"
+                    full_cell.num_fails += cell_entry.num_bad
+                    full_cell.debug_group = cell_entry.debug_group
+                    full_cell.link = cell_entry.link
+        row_cells.append(full_cell)
 
-    return row_strs
+    return row_cells
 
 
 def mk_sky_cols(t, metric_defs, n, bands, cols):
@@ -434,36 +450,22 @@ def mk_sky_cols(t, metric_defs, n, bands, cols):
     row_strs : `tuple` of `str`
         A tuple of the formatted strings for the sky columns
     """
-    row_strs = []
+    row_cells = []
     for col in cols:
         for stat, dev in [("mean", "stdev"), ("median", "sigmaMAD")]:
-            row_str = ""
-            num_bad = 0
-            debug_group_all = None
+            full_cell = cell_contents()
             for band in ["u", "g", "r", "i", "z", "y"]:
                 if band in bands:
                     val_col_name = col + "_" + band + "_" + stat + "Sky"
                     sig_col_name = col + "_" + band + "_" + dev + "Sky"
-                    val_str, sig_str, bad_val, link, debug_group = mk_table_value(
+                    cell_entry = mk_table_value(
                         t[n], metric_defs, val_col_name, sig_col_name
                     )
-                else:
-                    val_str = None
+                    full_cell.text += f"<B>{band}</B>: {cell_entry.val_str} "
+                    full_cell.text += f"<B>&sigma;</B>: {cell_entry.sig_str}<BR>\n"
+                    full_cell.num_fails += cell_entry.num_bad
+                    if full_cell.debug_group is not None:
+                        full_cell.debug_group = cell_entry.debug_group
+            row_cells.append(full_cell)
 
-                if val_str is None:
-                    continue
-                row_str += (
-                    "<B>"
-                    + band
-                    + "</B>: "
-                    + val_str
-                    + "  <B>&sigma;</B>: "
-                    + sig_str
-                    + "<BR>\n"
-                )
-            num_bad += bad_val
-            if debug_group is not None:
-                debug_group_all = debug_group
-            row_strs.append((row_str, num_bad, link, debug_group_all))
-
-    return row_strs
+    return row_cells
