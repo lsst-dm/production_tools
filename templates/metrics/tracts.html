@@ -23,14 +23,14 @@
         </tr>
     </thead>
 
-    {% for tract in content_dict %}
+    {% for key in content_dict %}
         <tr>
         <td>
-        <a href={{url_for(content_dict[tract][0].text, collection_name=collection_urlencoded, tract=tract)}}>
-        {{tract}}
+        <a href={{url_for(content_dict[key][0].text, collection_name=collection_urlencoded, tract=key)}}>
+        {{key}}
         </a>
         </td>
-        {% for cell in content_dict[tract][1:] %}
+        {% for cell in content_dict[key][1:] %}
             {% if cell.text|length == 1 %}
                 <td>{{cell.text|safe}}</td>
             {% else %}

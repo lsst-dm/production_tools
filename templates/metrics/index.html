@@ -11,7 +11,7 @@
 <H3>Official Collections</H3>
 <ul>
     {% for entry in collection_entries %}
-    <li><a href="{{ url_for("metrics.collection", repo=entry["repo"], collection=entry["url"]) }}">
+    <li><a href="{{ url_for(".infoPage", repo=entry["repo"], collection=entry["url"]) }}">
             {{entry["name"]}}
         </a>
     </li>
@@ -22,7 +22,7 @@
 <H3>User Collections</H3>
 <ul>
     {% for entry in user_collection_entries %}
-    <li><a href="{{ url_for("metrics.collection", repo=entry["repo"], collection=entry["url"]) }}">
+    <li><a href="{{ url_for(".infoPage", repo=entry["repo"], collection=entry["url"]) }}">
             {{entry["name"]}}
         </a>
     </li>
