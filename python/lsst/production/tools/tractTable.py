@@ -21,13 +21,14 @@
 
 import os
 import urllib.parse
+import fnmatch
 
 import boto3
 import botocore
 import numpy as np
 import yaml
 from flask import Blueprint, Flask, render_template, url_for
-from lsst.daf.butler import Butler
+from lsst.daf.butler import Butler, MissingDatasetTypeError
 
 from .htmlUtils import *
 
@@ -116,8 +117,98 @@ def index():
     )
 
 
-@bp.route("/collection/<repo>/<url:collection>")
-def collection(repo, collection):
+@bp.route("/collection/<repo>/<url:collection>/infoPage")
+def infoPage(repo, collection):
+    expanded_repo_name = None
+
+    if repo in REPO_NAMES:
+        expanded_repo_name = repo
+    else:
+        for test_name in REPO_NAMES:
+            if repo == test_name.split("/")[-1]:
+                expanded_repo_name = f"/repo/{repo}"
+
+    if not expanded_repo_name:
+        return {"error": f"Invalid repo name {repo}, collection {collection}"}, 404
+
+    butler = Butler(expanded_repo_name)
+
+    try:
+        tables = butler.registry.queryDatasets("*etricsTable", collections=collection)
+        table_names = list(set([table.datasetType.name for table in tables]))
+    except MissingDatasetTypeError as e:
+        table_names = []
+
+    if len(table_names) > 0:
+        # This is hacky and assumes that everything has
+        # the same skymap
+        dataId = list(tables)[0].dataId
+
+    session = boto3.Session(profile_name="rubin-plot-navigator")
+    s3_client = session.client("s3", endpoint_url=os.getenv("S3_ENDPOINT_URL"))
+
+    metric_threshold_filename = "metricInformation.yaml"
+    try:
+        response = s3_client.get_object(
+            Bucket="rubin-plot-navigator", Key=metric_threshold_filename
+        )
+        metric_defs = yaml.safe_load(response["Body"])
+    except botocore.exceptions.ClientError as e:
+        print(e)
+
+    if "objectTableCore_metricsTable" in table_names:
+        t = butler.get(
+            "objectTableCore_metricsTable", collections=collection, dataId=dataId
+        )
+        metrics = [
+            "wPerpCModel_wPerp_cModelFlux_median",
+            "psfCModelScatter_i_psf_cModel_diff_median",
+        ]
+        worst_coadd, bad_ids = worst(t, metrics, "tract")
+        col_dict = {
+            "id_col": "tract",
+            "table_cols": ["corners", "nPatches", "nInputs", "failed metrics"],
+            "shape_cols": ["shapeSizeFractionalDiff", "e1Diff", "e2Diff"],
+            "photom_cols": ["psfCModelScatter"],
+            "stellar_locus_cols": ["yPerp", "wPerp", "xPerp"],
+            "sky_cols": ["skyFluxStatisticMetric"],
+        }
+        prefix = ""
+        headers = ["tract"] + col_dict["table_cols"]
+        for shape_col in col_dict["shape_cols"]:
+            headers.append(shape_col + "<BR>high SN stars")
+            headers.append(shape_col + "<BR>low SN stars")
+        headers += col_dict["stellar_locus_cols"]
+        headers += col_dict["photom_cols"]
+        for col in col_dict["sky_cols"]:
+            headers.append(col + "<BR>mean, stdev")
+            headers.append(col + "<BR>median, sigmaMAD")
+
+        coadd_headers, bands = make_table_headers(t, headers)
+        coadd_content = make_table_cells(bad_ids, col_dict, bands, metric_defs, prefix)
+
+    else:
+        worst_coadd = []
+        coadd_headers = []
+        coadd_content = {}
+
+    # Currently there are no visit level tables being made
+    worst_visit = []
+
+    return render_template(
+        "metrics/infoPage.html",
+        collection=collection,
+        repo=repo,
+        tables=table_names,
+        worst_coadd=worst_coadd,
+        coadd_headers=coadd_headers,
+        coadd_content=coadd_content,
+        worst_visit=worst_visit,
+    )
+
+
+@bp.route("/generalTable/<repo>/<url:collection>/<table_name>")
+def generalTable(repo, collection, table_name):
     """Make all the information needed to supply to the template
     for the tract summary table.
 
@@ -133,7 +224,6 @@ def collection(repo, collection):
     environment variable after removing any '/repo/' prefix from
     those names.
     """
-
     expanded_repo_name = None
 
     if repo in REPO_NAMES:
@@ -147,22 +237,98 @@ def collection(repo, collection):
         return {"error": f"Invalid repo name {repo}, collection {collection}"}, 404
 
     butler = Butler(expanded_repo_name)
-    if expanded_repo_name == "/repo/main":
-        dataId = {"skymap": "hsc_rings_v1", "instrument": "HSC"}
-    else:
-        dataId = {"skymap": "lsst_cells_v1", "instrument": "LSSTComCam"}
 
-    t = butler.get(
-        "objectTableCore_metricsTable", collections=collection, dataId=dataId
-    )
+    table_name_short = table_name.split("/")[-1]
+    tables = butler.registry.queryDatasets(table_name, collections=collection)
+    for table in tables:
+        dataId = table.dataId
+    t = butler.get(table_name, collections=collection, dataId=dataId)
 
-    col_dict = {
-        "table_cols": ["tract", "corners", "nPatches", "nInputs", "failed metrics"],
-        "shape_cols": ["shapeSizeFractionalDiff", "e1Diff", "e2Diff"],
-        "photom_cols": ["psfCModelScatter"],
-        "stellar_locus_cols": ["yPerp", "wPerp", "xPerp"],
-        "sky_cols": ["skyFluxStatisticMetric"],
-    }
+    # Empty string in source cols is for source count
+    if table_name == "calibrate_metadata_metricsTable":
+        prefix = "calexpMetadataMetrics"
+        col_dict = {
+            "id_col": "visit",
+            "table_cols": ["day_obs", "detector", "band", "failed metrics"],
+            "footprint_cols": ["positive", "negative", "sky"],
+            "source_cols": ["", "saturated", "bad"],
+            "mask_cols": [
+                "bad",
+                "cr",
+                "crosstalk",
+                "edge",
+                "intrp",
+                "no_data",
+                "detected",
+                "detected_negative",
+                "sat",
+                "streak",
+                "suspect",
+                "unmasked_nan",
+            ],
+        }
+
+        headers = (
+            ["visit"] + col_dict["table_cols"] + ["footprints", "sources", "masks"]
+        )
+
+    if table_name == "objectTableCore_metricsTable":
+        col_dict = {
+            "id_col": "tract",
+            "table_cols": ["corners", "nPatches", "nInputs", "failed metrics"],
+            "shape_cols": ["shapeSizeFractionalDiff", "e1Diff", "e2Diff"],
+            "photom_cols": ["psfCModelScatter"],
+            "stellar_locus_cols": ["yPerp", "wPerp", "xPerp"],
+            "sky_cols": ["skyFluxStatisticMetric"],
+        }
+        prefix = ""
+        headers = ["tract"] + col_dict["table_cols"]
+        for shape_col in col_dict["shape_cols"]:
+            headers.append(shape_col + "<BR>high SN stars")
+            headers.append(shape_col + "<BR>low SN stars")
+        headers += col_dict["stellar_locus_cols"]
+        headers += col_dict["photom_cols"]
+        for col in col_dict["sky_cols"]:
+            headers.append(col + "<BR>mean, stdev")
+            headers.append(col + "<BR>median, sigmaMAD")
+
+    sar_cols = []
+    for num in ["1", "2", "3"]:
+        for stat in ["AM", "AF", "AD"]:
+            sar_cols.append(("stellarAstrometricRepeatability" + num, stat + num))
+
+    if table_name == "matchedVisitCore_metricsTable":
+        col_dict = {"id_col": "tract",
+                "table_cols": ["corners", "failed metrics"],
+                "sasr_cols": ["dmL2AstroErr"],
+                "var1_band_var2": sar_cols +
+                                  [("stellarPhotometricRepeatability", "stellarPhotRepeatStdev"),
+                                   ("stellarPhotometricRepeatability", "stellarPhotRepeatOutlierFraction"),
+                                   ("stellarPhotometricRepeatability", "ct"),
+                                   ("stellarPhotometricResidualsCalib", "photResidTractSigmaMad"),
+                                   ("stellarPhotometricResidualsCalib", "photResidTractStdev"),
+                                   ("stellarPhotometricResidualsCalib", "photResidTractMedian")]}
+        prefix = ""
+        headers = ["tract"] + col_dict["table_cols"]
+        headers += ["Stellar Ast Self Rep"]
+        for (line1, line2) in col_dict["var1_band_var2"]:
+            headers.append(line1 + "<BR>" + line2)
+
+    if fnmatch.fnmatch(table_name, "objectTable_tract_*_match_astrom_metricsTable"):
+        col_dict = {"id_col": "tract",
+                    "table_cols": ["corners", "failed metrics"],
+                    "var1_band_var2": [("astromDiffMetrics", "AA1_RA_coadd"),
+                                       ("astromDiffMetrics", "AA1_sigmaMad_RA_coadd"),
+                                       ("astromDiffMetrics", "AA1_Dec_coadd"),
+                                       ("astromDiffMetrics", "AA1_sigmaMad_Dec_coadd"),
+                                       ("astromDiffMetrics", "AA1_tot_coadd"),
+                                       ("astromDiffMetrics", "AA1_sigmaMad_tot_coadd")]}
+        prefix = ""
+        headers = ["tract"] + col_dict["table_cols"]
+        for (line1, line2) in col_dict["var1_band_var2"]:
+            headers.append(line1 + "<BR>" + line2)
+
+
     session = boto3.Session(profile_name="rubin-plot-navigator")
     s3_client = session.client("s3", endpoint_url=os.getenv("S3_ENDPOINT_URL"))
 
@@ -176,62 +342,11 @@ def collection(repo, collection):
         print(e)
 
     # Make the headers for the table
-    header_dict, bands = mk_table_headers(t, col_dict)
+    # Pulls the bands out of the coadd tables, ignore for visits
+    header_dict, bands = make_table_headers(t, headers)
 
     # Make the content for the table
-    content_dict = {}
-    for n, tract in enumerate(t["tract"]):
-        row_list = []
-        row_list.append(mk_tract_cell(tract))
-
-        # Add a summary plot in the i band of the tract
-        row_list.append(mk_summary_plot_cell(tract))
-        # Add the number of patches
-        row_list.append(mk_patch_num_cell(t, n, bands))
-        # Add the number of inputs
-        row_list.append(mk_num_inputs_cell(t, metric_defs, n, bands))
-
-        num_bad = 0
-        cell_vals = []
-        # Get the number of failed values and prep cell contents
-        for shape_cell in mk_shape_cols(
-            t[n], metric_defs, bands, col_dict["shape_cols"]
-        ):
-            cell_vals.append(shape_cell)
-            if shape_cell.num_fails is not None:
-                num_bad += shape_cell.num_fails
-
-        # Make the cell details for the stellar locus columns
-        for sl_cell in mk_stellar_locus_cols(
-            t, metric_defs, n, col_dict["stellar_locus_cols"]
-        ):
-            cell_vals.append(sl_cell)
-            if sl_cell.num_fails is not None:
-                num_bad += sl_cell.num_fails
-
-        # Make the cell contents for the photometry columns
-        for photom_cell in mk_photom_cols(
-            t, metric_defs, n, bands, col_dict["photom_cols"]
-        ):
-            cell_vals.append(photom_cell)
-            if photom_cell.num_fails is not None:
-                num_bad += photom_cell.num_fails
-
-        # Make the cell contents for the sky columns
-        for sky_cell in mk_sky_cols(t, metric_defs, n, bands, col_dict["sky_cols"]):
-            cell_vals.append(sky_cell)
-            if sky_cell.num_fails is not None:
-                num_bad += sky_cell.num_fails
-
-        # Add a nan/bad summary cell next but need to calculate these numbers first
-        bad_cell = cell_contents()
-        bad_cell.text = str(num_bad)
-        row_list.append(bad_cell)
-        for val in cell_vals:
-            row_list.append(val)
-
-        content_dict[tract] = row_list
-
+    content_dict = make_table_cells(t, col_dict, bands, metric_defs, prefix)
     return render_template(
         "metrics/tracts.html",
         header_dict=header_dict,
