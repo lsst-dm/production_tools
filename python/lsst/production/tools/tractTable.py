@@ -19,9 +19,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import fnmatch
 import os
 import urllib.parse
-import fnmatch
 
 import boto3
 import botocore
@@ -134,7 +134,9 @@ def infoPage(repo, collection):
     butler = Butler(expanded_repo_name)
 
     try:
-        tables = butler.registry.queryDatasets("*etricsTable", collections=collection)
+        tables = butler.registry.queryDatasets(
+            "*metrics_table*", collections=collection
+        )
         table_names = list(set([table.datasetType.name for table in tables]))
     except MissingDatasetTypeError as e:
         table_names = []
@@ -156,10 +158,15 @@ def infoPage(repo, collection):
     except botocore.exceptions.ClientError as e:
         print(e)
 
-    if "objectTableCore_metricsTable" in table_names:
-        t = butler.get(
-            "objectTableCore_metricsTable", collections=collection, dataId=dataId
-        )
+    if (
+        "objectTableCore_metricsTable" in table_names
+        or "object_metrics_table" in table_names
+    ):
+        if "object_metrics_table" in table_names:
+            coadd_table_name = "object_metrics_table"
+        else:
+            coadd_table_name = "objectTableCore_metricsTable"
+        t = butler.get(coadd_table_name, collections=collection, dataId=dataId)
         metrics = [
             "wPerpCModel_wPerp_cModelFlux_median",
             "psfCModelScatter_i_psf_cModel_diff_median",
@@ -272,7 +279,10 @@ def generalTable(repo, collection, table_name):
             ["visit"] + col_dict["table_cols"] + ["footprints", "sources", "masks"]
         )
 
-    if table_name == "objectTableCore_metricsTable":
+    if (
+        table_name == "objectTableCore_metricsTable"
+        or table_name == "object_metrics_table"
+    ):
         col_dict = {
             "id_col": "tract",
             "table_cols": ["corners", "nPatches", "nInputs", "failed metrics"],
@@ -292,42 +302,56 @@ def generalTable(repo, collection, table_name):
             headers.append(col + "<BR>mean, stdev")
             headers.append(col + "<BR>median, sigmaMAD")
 
-    sar_cols = []
-    for num in ["1", "2", "3"]:
-        for stat in ["AM", "AF", "AD"]:
-            sar_cols.append(("stellarAstrometricRepeatability" + num, stat + num))
+    if (
+        table_name == "matchedVisitCore_metricsTable"
+        or table_name == "single_visit_star_association_metrics_table"
+        or table_name == "analysis_source_association_metrics_table"
+        or table_name == "recalibrated_star_association_metrics_table"
+    ):
+        sar_cols = []
+        for num in ["1", "2", "3"]:
+            for stat in ["AM", "AF", "AD"]:
+                sar_cols.append(("stellarAstrometricRepeatability" + num, stat + num))
 
-    if table_name == "matchedVisitCore_metricsTable":
-        col_dict = {"id_col": "tract",
-                "table_cols": ["corners", "failed metrics"],
-                "sasr_cols": ["dmL2AstroErr"],
-                "var1_band_var2": sar_cols +
-                                  [("stellarPhotometricRepeatability", "stellarPhotRepeatStdev"),
-                                   ("stellarPhotometricRepeatability", "stellarPhotRepeatOutlierFraction"),
-                                   ("stellarPhotometricRepeatability", "ct"),
-                                   ("stellarPhotometricResidualsCalib", "photResidTractSigmaMad"),
-                                   ("stellarPhotometricResidualsCalib", "photResidTractStdev"),
-                                   ("stellarPhotometricResidualsCalib", "photResidTractMedian")]}
+        col_dict = {
+            "id_col": "tract",
+            "table_cols": ["corners", "failed metrics"],
+            "sasr_cols": ["dmL2AstroErr"],
+            "var1_band_var2": sar_cols
+            + [
+                ("stellarPhotometricRepeatability", "stellarPhotRepeatStdev"),
+                ("stellarPhotometricRepeatability", "stellarPhotRepeatOutlierFraction"),
+                ("stellarPhotometricRepeatability", "ct"),
+                ("stellarPhotometricResidualsCalib", "photResidTractSigmaMad"),
+                ("stellarPhotometricResidualsCalib", "photResidTractStdev"),
+                ("stellarPhotometricResidualsCalib", "photResidTractMedian"),
+            ],
+        }
         prefix = ""
         headers = ["tract"] + col_dict["table_cols"]
         headers += ["Stellar Ast Self Rep"]
-        for (line1, line2) in col_dict["var1_band_var2"]:
+        for line1, line2 in col_dict["var1_band_var2"]:
             headers.append(line1 + "<BR>" + line2)
 
-    if fnmatch.fnmatch(table_name, "objectTable_tract_*_match_astrom_metricsTable"):
-        col_dict = {"id_col": "tract",
-                    "table_cols": ["corners", "failed metrics"],
-                    "var1_band_var2": [("astromDiffMetrics", "AA1_RA_coadd"),
-                                       ("astromDiffMetrics", "AA1_sigmaMad_RA_coadd"),
-                                       ("astromDiffMetrics", "AA1_Dec_coadd"),
-                                       ("astromDiffMetrics", "AA1_sigmaMad_Dec_coadd"),
-                                       ("astromDiffMetrics", "AA1_tot_coadd"),
-                                       ("astromDiffMetrics", "AA1_sigmaMad_tot_coadd")]}
+    if fnmatch.fnmatch(
+        table_name, "objectTable_tract_*_match_astrom_metricsTable"
+    ) or fnmatch.fnmatch(table_name, "object_ref_match_astrom_metrics_table"):
+        col_dict = {
+            "id_col": "tract",
+            "table_cols": ["corners", "failed metrics"],
+            "var1_band_var2": [
+                ("astromDiffMetrics", "AA1_RA_coadd"),
+                ("astromDiffMetrics", "AA1_sigmaMad_RA_coadd"),
+                ("astromDiffMetrics", "AA1_Dec_coadd"),
+                ("astromDiffMetrics", "AA1_sigmaMad_Dec_coadd"),
+                ("astromDiffMetrics", "AA1_tot_coadd"),
+                ("astromDiffMetrics", "AA1_sigmaMad_tot_coadd"),
+            ],
+        }
         prefix = ""
         headers = ["tract"] + col_dict["table_cols"]
-        for (line1, line2) in col_dict["var1_band_var2"]:
+        for line1, line2 in col_dict["var1_band_var2"]:
             headers.append(line1 + "<BR>" + line2)
-
 
     session = boto3.Session(profile_name="rubin-plot-navigator")
     s3_client = session.client("s3", endpoint_url=os.getenv("S3_ENDPOINT_URL"))
@@ -352,6 +376,7 @@ def generalTable(repo, collection, table_name):
         header_dict=header_dict,
         content_dict=content_dict,
         collection=collection,
+        table_name=table_name,
     )
 
 
