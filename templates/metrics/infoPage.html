@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% set active_page="metrics" %}
+
+{% block title %}Collection Summary - {{collection}}{% endblock %}
+
+
+
+{% block content %}
+
+<a href={{url_for(".index")}}>&lt;-- Back to collections</a>
+
+<H1>Available Tables:</H1>
+{% for table in tables %}
+<a href={{url_for(".generalTable", collection=collection, repo=repo, table_name=table)}}>{{table}}</a><BR>
+{% endfor %}
+
+<BR><H1>Tract Level Summary</H1>
+{% if worst_coadd|length == 0 %}
+No supported coadd level tables found.<BR>
+{% else %}
+Worst instances of these metrics and their associated rows from objectTableCore.<br><br>
+{% for worst in worst_coadd %}
+<B>{{worst[0]}}:</B> {{worst[1]}}, tract: {{worst[2]}}<BR>
+{% endfor %}
+
+<table>
+
+    <thead>
+        <tr>
+        {% for header in coadd_headers %}
+            <th>
+            <a href={{url_for(coadd_headers[header], collection_name=collection_urlencoded)}} class=tableHeader>
+            {{header|safe}}
+            </a>
+            </th>
+        {% endfor %}
+        </tr>
+    </thead>
+
+    {% for key in coadd_content %}
+        <tr>
+        <td>
+        <a href={{url_for(coadd_content[key][0].text, collection_name=collection_urlencoded, tract=key)}}>
+        {{key}}
+        </a>
+        </td>
+        {% for cell in coadd_content[key][1:] %}
+            {% if cell.text|length == 1 %}
+                <td>{{cell.text|safe}}</td>
+            {% else %}
+                {% if 'badValue' in cell.text %}
+                    <td>
+                    <a href={{url_for(cell.link, collection_name=collection_urlencoded, metric=cell.debug_group)}}
+                        class=tableLink>
+                    {{cell.text|safe}}
+                    </a>
+                    </td>
+                {% else %}
+                    <td>{{cell.text|safe}}</td>
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+        </tr>
+    {% endfor %}
+{% endif %}
+
+</table>
+
+<H1>Visit Level Summary</H1>
+{% if worst_visit|length == 0 %}
+No supported visit level tables found.
+{% endif %}
+
+<br>
+{% endblock %}
