@@ -31,14 +31,15 @@ bp = Blueprint("images", __name__, url_prefix="/plot-navigator/images", static_f
 
 REPO_NAMES = os.getenv("BUTLER_REPO_NAMES").split(",")
 
+butler_map = {}
+
 def get_butler_map(repo):
-    if 'butler' not in g:
-        g.butler_map = {}
 
-    if repo in REPO_NAMES and (repo not in g.butler_map.keys()):
-        g.butler_map[repo] = Butler(repo)
+    if repo in REPO_NAMES and (repo not in butler_map.keys()):
+        print("Instantiating a butler")
+        butler_map[repo] = Butler(repo)
 
-    return g.butler_map[repo]
+    return butler_map[repo]
 
 @bp.route("/uuid/<url:repo>/<uuid>")
 def index(repo, uuid):
