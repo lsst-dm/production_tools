@@ -17,4 +17,4 @@ RUN pip install -e /app/production-tools/
 
 WORKDIR /app/production-tools/
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--worker-class=eventlet", "--access-logfile", "-", "lsst.production.tools:create_app()"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers=10","--access-logfile", "-", "lsst.production.tools:create_app()"]
