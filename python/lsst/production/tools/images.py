@@ -20,9 +20,10 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-from flask import Blueprint, send_file, g
+from flask import Blueprint, send_file, g, request, make_response
 import os
 import io
+from PIL import Image
 
 from lsst.daf.butler import Butler, DatasetId
 from lsst.resources import ResourcePath
@@ -41,7 +42,7 @@ def get_butler_map(repo):
 
     return butler_map[repo]
 
-@bp.route("/uuid/<url:repo>/<uuid>")
+@bp.route("/uuid/<url:repo>/<uuid>", methods=["GET", "HEAD"])
 def index(repo, uuid):
 
     if repo not in REPO_NAMES:
@@ -54,6 +55,38 @@ def index(repo, uuid):
     if dataset_ref.datasetType.storageClass_name != "Plot":
         return {"error": "Storage class of dataset is not 'Plot'"}, 400
 
-    image = io.BytesIO(resource_path.read())
-    return send_file(image, mimetype="image/png")
+    image_bytes = io.BytesIO(resource_path.read())
+    image = Image.open(image_bytes)
+
+
+    if request.method == "HEAD":
+        response = make_response()
+
+    else:
+        response = send_file(image_bytes, mimetype="image/png")
+
+    # PNG metadata used for identifying image regions.
+    if 'boxes' in image.info:
+        response.headers['Has-Metadata'] = 'true'
+
+    return response
+
+@bp.route("/uuid_md/<url:repo>/<uuid>")
+def metadata(repo, uuid):
+
+    if repo not in REPO_NAMES:
+        return {"error": f"Invalid repo {repo}"}, 400
+
+    butler = get_butler_map(repo)
+    dataset_ref = butler.get_dataset(DatasetId(uuid))
+    resource_path = ResourcePath(butler.getURI(dataset_ref))
+
+    if dataset_ref.datasetType.storageClass_name != "Plot":
+        return {"error": "Storage class of dataset is not 'Plot'"}, 400
+
+    image_bytes = io.BytesIO(resource_path.read())
+    image = Image.open(image_bytes)
+    return {
+        'label': image.info['label'],
+        'boxes': image.info['boxes']}
 
