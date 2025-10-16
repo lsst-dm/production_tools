@@ -66,8 +66,8 @@ def index(repo, uuid):
         response = send_file(image_bytes, mimetype="image/png")
 
     # PNG metadata used for identifying image regions.
-    if 'boxes' in image.info:
-        response.headers['Has-Metadata'] = 'true'
+    # if 'boxes' in image.info:
+    #     response.headers['Has-Metadata'] = 'true'
 
     return response
 
@@ -87,6 +87,6 @@ def metadata(repo, uuid):
     image_bytes = io.BytesIO(resource_path.read())
     image = Image.open(image_bytes)
     return {
-        'label': image.info['label'],
-        'boxes': image.info['boxes']}
+        'label': image.info.get('label', ""),
+        'boxes': image.info.get('boxes', [])}
 
