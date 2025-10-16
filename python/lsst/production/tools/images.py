@@ -56,7 +56,7 @@ def index(repo, uuid):
         return {"error": "Storage class of dataset is not 'Plot'"}, 400
 
     image_bytes = io.BytesIO(resource_path.read())
-    image = Image.open(image_bytes)
+    # image = Image.open(image_bytes)
 
 
     if request.method == "HEAD":
