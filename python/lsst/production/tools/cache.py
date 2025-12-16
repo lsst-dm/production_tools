@@ -50,7 +50,8 @@ async def index():
     if request.method == 'PUT':
 
         data = request.get_json()
-        arq_job = await redis.enqueue_job("cache_plots", data['repo'], data['collection'])
+        arq_job = await redis.enqueue_job("cache_plots", data['repo'], data['collection'],
+                                          data.get("filter_collections", False))
         return jsonify({"jobId": arq_job.job_id})
 
     else:
@@ -71,12 +72,32 @@ async def job(job_id):
     return jsonify({"status": await arq_job.status(),
                     "result": job_result.result if job_result is not None else ""})
 
-async def cache_plots(ctx, repo, collection):
+async def cache_plots(ctx, repo, collection, filter_collections=False):
+    """
+    Generate the plot cache file and write it to S3.
+
+    Parameters
+    ----------
+    repo : string
+       Butler repository
+
+    collection : string
+       Butler collection to search for plots.
+
+    filter_collections : bool, optional
+       Only include plots in run collections named with the same prefix as `collection`.
+
+    Returns
+    -------
+    string
+       Success or error message.
+    """
 
     butler = dafButler.Butler(repo)
 
     try:
-        summary = summarize_collection(butler, collection)
+        summary = summarize_collection(butler, collection,
+                                       filter_prefix=collection if filter_collections else "")
     except dafButler.MissingCollectionError as e:
         return f"Error: {e}"
 
@@ -107,7 +128,7 @@ class Worker:
                                                    password=os.getenv("REDIS_PASSWORD"))
 
 
-def summarize_collection(butler, collection_name):
+def summarize_collection(butler, collection_name, filter_prefix=""):
 
     out = {}
 
@@ -121,21 +142,24 @@ def summarize_collection(butler, collection_name):
     tract_datasets = list(butler.registry.queryDatasets(tract_plot_types, collections=collection_name, findFirst=True))
     out['tracts'] = {}
     for plot_type in tract_plot_types:
-        ref_dicts = [{"dataId": json.dumps(dict(datasetRef.dataId.mapping)), "id": str(datasetRef.id)} for datasetRef in tract_datasets if datasetRef.datasetType == plot_type]
+        ref_dicts = [{"dataId": json.dumps(dict(datasetRef.dataId.mapping)), "id": str(datasetRef.id)} for datasetRef in tract_datasets
+                     if datasetRef.datasetType == plot_type and datasetRef.run.startswith(filter_prefix)]
         if(len(ref_dicts) > 0):
             out['tracts'][plot_type.name] = ref_dicts
 
     visit_datasets = list(butler.registry.queryDatasets(visit_plot_types, collections=collection_name, findFirst=True))
     out['visits'] = {}
     for plot_type in visit_plot_types:
-        ref_dicts = [{"dataId": json.dumps(dict(datasetRef.dataId.mapping)), "id": str(datasetRef.id)} for datasetRef in visit_datasets if datasetRef.datasetType == plot_type]
+        ref_dicts = [{"dataId": json.dumps(dict(datasetRef.dataId.mapping)), "id": str(datasetRef.id)} for datasetRef in visit_datasets
+                     if datasetRef.datasetType == plot_type and datasetRef.run.startswith(filter_prefix)]
         if(len(ref_dicts) > 0):
             out['visits'][plot_type.name] = ref_dicts
 
     global_datasets = list(butler.registry.queryDatasets(global_plot_types, collections=collection_name, findFirst=True))
     out['global'] = {}
     for plot_type in global_plot_types:
-        ref_dicts = [{"dataId": json.dumps(dict(datasetRef.dataId.mapping)), "id": str(datasetRef.id)} for datasetRef in global_datasets if datasetRef.datasetType == plot_type]
+        ref_dicts = [{"dataId": json.dumps(dict(datasetRef.dataId.mapping)), "id": str(datasetRef.id)} for datasetRef in global_datasets
+                     if datasetRef.datasetType == plot_type and datasetRef.run.startswith(filter_prefix)]
         if(len(ref_dicts) > 0):
             out['global'][plot_type.name] = ref_dicts
 
