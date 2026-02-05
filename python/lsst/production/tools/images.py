@@ -63,7 +63,10 @@ def index(repo, uuid):
         response = make_response()
 
     else:
-        response = send_file(image_bytes, mimetype="image/png")
+        # BytesIO behaves like a stream, so sharing it between
+        # Image.open() and send_file() causes issues.
+        image_to_send = io.BytesIO(resource_path.read())
+        response = send_file(image_to_send, mimetype="image/png")
 
     # PNG metadata used for identifying image regions.
     if 'boxes' in image.info:
