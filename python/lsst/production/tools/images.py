@@ -87,6 +87,6 @@ def metadata(repo, uuid):
     image_bytes = io.BytesIO(resource_path.read())
     image = Image.open(image_bytes)
     return {
-        'label': image.info['label'],
-        'boxes': image.info['boxes']}
+        'label': image.info['label'] if 'label' in image.info else None,
+        'boxes': image.info['boxes'] if 'boxes' in image.info else None}
 
