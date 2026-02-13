@@ -99,7 +99,7 @@ async def cache_plots(ctx, repo, collection, filter_collections=False):
         summary = summarize_collection(butler, collection,
                                        filter_prefix=collection if filter_collections else "")
     except dafButler.MissingCollectionError as e:
-        return f"Error: {e}"
+        return f"Error: Collection '{collection}' not found in {repo} repo."
 
     encoded_collection_name = urllib.parse.quote_plus(collection)
     encoded_repo = urllib.parse.quote_plus(repo)
